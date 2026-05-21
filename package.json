@@ -1,37 +1,35 @@
 {
-  "name": "bg-remover-ai",
-  "version": "1.0.0",
-  "description": "Professional AI-powered background removal tool with statistics tracking",
+  "name": "image-processing-tool",
+  "version": "1.1.0",
+  "description": "Image Processing Tool with Background Removal and Upscaling",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "vercel-build": "echo 'Building for Vercel...'"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "background-remover",
-    "ai-image-processing",
-    "image-editor",
-    "remove-background",
-    "express-app",
-    "vercel"
+    "image-processing",
+    "background-removal",
+    "upscale",
+    "tool"
   ],
   "author": "Your Name",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
-    "multer": "^1.4.5-lts.1",
-    "axios": "^1.6.2",
-    "cors": "^2.8.5",
+    "axios": "^1.6.0",
+    "compression": "^1.7.4",
     "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
-    "helmet": "^7.1.0",
-    "compression": "^1.7.4"
+    "helmet": "^7.0.0",
+    "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "nodemon": "^3.0.1"
   },
   "engines": {
-    "node": ">=18.x"
+    "node": ">=16.0.0"
   }
 }

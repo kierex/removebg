@@ -12,48 +12,15 @@ const compression = require("compression")
 const app = express()
 const PORT = process.env.PORT || 3000
 
-// Store counters with file persistence (Vercel compatible)
-const COUNTERS_FILE = path.join('/tmp', 'counters.json') // Use /tmp for Vercel
-
-// Initialize counters
-let counters = {
-  successful: 0,
-  failed: 0,
-  total: 0,
-  lastReset: new Date().toISOString()
-}
-
-// Load counters from file if exists (for Vercel)
-if (fs.existsSync(COUNTERS_FILE)) {
-  try {
-    const data = fs.readFileSync(COUNTERS_FILE, 'utf8')
-    const savedCounters = JSON.parse(data)
-    counters = savedCounters
-    console.log('📊 Counters loaded:', counters)
-  } catch (error) {
-    console.error('Error loading counters:', error)
-  }
-}
-
-// Save counters to file
-function saveCounters() {
-  try {
-    fs.writeFileSync(COUNTERS_FILE, JSON.stringify(counters, null, 2))
-    console.log('📊 Counters saved:', counters)
-  } catch (error) {
-    console.error('Error saving counters:', error)
-  }
-}
-
 // Security middleware
 app.use(helmet({
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: false, // Can be configured based on needs
   crossOriginEmbedderPolicy: false
 }))
 
 app.use(compression())
 app.use(cors({
-  origin: '*', // Allow all origins for Vercel
+  origin: process.env.NODE_ENV === 'production' ? 'your-domain.com' : '*',
   credentials: true
 }))
 
@@ -61,29 +28,26 @@ app.use(cookieParser())
 app.set("trust proxy", true)
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
-
-// Serve static files from public directory
 app.use(express.static("public"))
+app.use("/uploads", express.static("uploads"))
 
-// Rate limiting (simplified for Vercel)
+// Rate limiting
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: { error: "Too many requests, please try again later." },
-  keyGenerator: (req) => {
-    return req.headers['x-forwarded-for'] || req.socket.remoteAddress
-  }
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: { error: "Too many requests, please try again later." }
 })
 
+// Apply rate limiting to API routes
 app.use("/api/", apiLimiter)
 
-// Ensure uploads directory exists (use /tmp for Vercel)
-const uploadsDir = process.env.VERCEL ? '/tmp/uploads' : 'uploads'
+// Ensure uploads directory exists
+const uploadsDir = "uploads"
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true })
 }
 
-// Multer configuration with memory storage for Vercel
+// Enhanced multer configuration with file filtering
 const storage = multer.diskStorage({
   destination: uploadsDir,
   filename: (_, file, cb) => {
@@ -108,7 +72,7 @@ const upload = multer({
   storage,
   fileFilter,
   limits: { 
-    fileSize: 20 * 1024 * 1024,
+    fileSize: 20 * 1024 * 1024, // 20MB max file size
     files: 1
   }
 })
@@ -116,27 +80,10 @@ const upload = multer({
 // Utility functions
 const fileURL = (req, file) => {
   const protocol = req.headers['x-forwarded-proto'] || req.protocol
-  const host = req.headers['x-forwarded-host'] || req.get("host")
-  return `${protocol}://${host}/api/temp-file?file=${file.filename}`
+  return `${protocol}://${req.get("host")}/uploads/${file.filename}`
 }
 
-// Temporary file access endpoint for Vercel
-app.get("/api/temp-file", (req, res) => {
-  const fileName = req.query.file
-  if (!fileName) {
-    return res.status(400).json({ error: "No file specified" })
-  }
-  const filePath = path.join(uploadsDir, fileName)
-  if (fs.existsSync(filePath)) {
-    res.sendFile(filePath)
-  } else {
-    res.status(404).json({ error: "File not found" })
-  }
-})
-
 const cleanupOldFiles = () => {
-  if (!fs.existsSync(uploadsDir)) return
-  
   fs.readdir(uploadsDir, (err, files) => {
     if (err) return
 
@@ -161,9 +108,6 @@ const cleanupOldFiles = () => {
 app.post("/api/removebg", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
-      counters.failed++
-      counters.total++
-      saveCounters()
       return res.status(400).json({ 
         success: false, 
         error: "No image file provided" 
@@ -176,79 +120,56 @@ app.post("/api/removebg", upload.single("image"), async (req, res) => {
     const response = await axios.get(apiUrl, { timeout: 30000 })
 
     if (response.data?.data?.url) {
-      // Successful processing
-      counters.successful++
-      counters.total++
-      saveCounters()
-      
       res.json({ 
         success: true, 
         url: response.data.data.url,
-        message: "Background removed successfully!",
-        stats: {
-          successful: counters.successful,
-          failed: counters.failed,
-          total: counters.total
-        }
+        message: "Background removed successfully!"
       })
     } else {
       throw new Error("Invalid response from background removal service")
     }
   } catch (error) {
     console.error("Remove BG error:", error.message)
-    counters.failed++
-    counters.total++
-    saveCounters()
-    
     res.status(500).json({ 
       success: false, 
-      error: "Failed to remove background. Please try again.",
-      stats: {
-        successful: counters.successful,
-        failed: counters.failed,
-        total: counters.total
-      }
+      error: "Failed to remove background. Please try again." 
     })
   }
 })
 
-// Get counters endpoint
-app.get("/api/counters", (req, res) => {
-  res.json({
-    success: true,
-    stats: {
-      successful: counters.successful,
-      failed: counters.failed,
-      total: counters.total,
-      successRate: counters.total > 0 ? ((counters.successful / counters.total) * 100).toFixed(1) : 0
-    },
-    lastReset: counters.lastReset
-  })
+app.post("/api/upscale", upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "No image file provided" 
+      })
+    }
+
+    const imgUrl = fileURL(req, req.file)
+    const apiUrl = `https://api-library-kohi.onrender.com/api/upscale?url=${encodeURIComponent(imgUrl)}`
+
+    const response = await axios.get(apiUrl, { timeout: 30000 })
+
+    if (response.data?.data?.url) {
+      res.json({ 
+        success: true, 
+        url: response.data.data.url,
+        message: "Image upscaled successfully!"
+      })
+    } else {
+      throw new Error("Invalid response from upscale service")
+    }
+  } catch (error) {
+    console.error("Upscale error:", error.message)
+    res.status(500).json({ 
+      success: false, 
+      error: "Failed to upscale image. Please try again." 
+    })
+  }
 })
 
-// Reset counters (admin only)
-app.post("/api/reset-counters", (req, res) => {
-  const adminKey = req.headers['x-admin-key']
-  
-  if (adminKey !== process.env.ADMIN_KEY && adminKey !== 'your-secret-admin-key-123') {
-    return res.status(403).json({ success: false, error: "Unauthorized" })
-  }
-  
-  counters = {
-    successful: 0,
-    failed: 0,
-    total: 0,
-    lastReset: new Date().toISOString()
-  }
-  saveCounters()
-  
-  res.json({ 
-    success: true, 
-    message: "Counters reset successfully",
-    stats: counters
-  })
-})
-
+// Info endpoint
 app.get("/api/info", (req, res) => {
   res.json({
     success: true,
@@ -258,6 +179,7 @@ app.get("/api/info", (req, res) => {
   })
 })
 
+// Accept terms endpoint
 app.post("/api/accept-terms", (req, res) => {
   const oneYear = 365 * 24 * 60 * 60 * 1000
   res.cookie("termsAccepted", "true", {
@@ -269,6 +191,7 @@ app.post("/api/accept-terms", (req, res) => {
   res.json({ success: true, message: "Terms accepted successfully" })
 })
 
+// Download endpoint with validation
 app.get("/api/download", async (req, res) => {
   try {
     const url = req.query.url
@@ -304,72 +227,34 @@ app.get("/api/download", async (req, res) => {
   }
 })
 
+// Health check endpoint
 app.get("/health", (req, res) => {
   res.json({ 
     status: "healthy", 
     timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    stats: {
-      successful: counters.successful,
-      failed: counters.failed,
-      total: counters.total
-    }
+    uptime: process.uptime()
   })
 })
 
-// Serve frontend
-app.get("/", (req, res) => {
-  if (req.cookies.termsAccepted === "true") {
-    res.sendFile(path.join(__dirname, "public", "index.html"))
-  } else {
-    res.sendFile(path.join(__dirname, "public", "portal.html"))
-  }
+// Cleanup old files every 30 minutes
+setInterval(cleanupOldFiles, 30 * 60 * 1000)
+
+// Start cleanup on server start
+cleanupOldFiles()
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`)
+  console.log(`📁 Upload directory: ${path.join(__dirname, uploadsDir)}`)
+  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`)
 })
 
-// Cleanup old files every 30 minutes (only in production)
-if (!process.env.VERCEL) {
-  setInterval(cleanupOldFiles, 30 * 60 * 1000)
-  cleanupOldFiles()
-}
-
-// Save counters on process exit
-process.on('SIGINT', () => {
-  saveCounters()
-  process.exit()
-})
-
-process.on('SIGTERM', () => {
-  saveCounters()
-  process.exit()
-})
-
-// Error handling middleware for API
-app.use("/api/*", (err, req, res, next) => {
-  console.error(err.stack)
-  res.status(500).json({ 
-    success: false, 
-    error: "Internal server error" 
-  })
-})
-
-// Export for Vercel
-if (process.env.VERCEL) {
-  module.exports = app
-} else {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`)
-    console.log(`📁 Upload directory: ${path.join(__dirname, uploadsDir)}`)
-    console.log(`📊 Current stats: ${counters.successful} successful, ${counters.failed} failed`)
-    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`)
-  })
-}
-
+// Handle uncaught errors
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason)
 })
 
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error)
-  saveCounters()
-  if (!process.env.VERCEL) process.exit(1)
+  process.exit(1)
 })

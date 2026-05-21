@@ -1,18 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <meta name="description" content="Free AI-powered background remover - Remove image backgrounds instantly with high quality">
-    <meta name="theme-color" content="#6366f1">
-    <title>BG Remover AI | Remove Background Instantly</title>
-    <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%236366f1'/%3E%3Cpath d='M50 20 L65 35 L50 50 L35 35 Z' fill='white'/%3E%3Ccircle cx='50' cy='50' r='15' fill='white'/%3E%3C/svg%3E">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%236366f1'/%3E%3Cpath d='M50 20 L65 35 L50 50 L35 35 Z' fill='white'/%3E%3Ccircle cx='50' cy='50' r='15' fill='white'/%3E%3C/svg%3E">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImageMagic Pro | Background Removal & Upscale</title>
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
+        :root {
+            /* Light Theme */
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --secondary-color: #8b5cf6;
+            --bg-color: #ffffff;
+            --card-bg: #f8fafc;
+            --text-color: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --warning-color: #f59e0b;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] {
+            /* Dark Theme */
+            --primary-color: #818cf8;
+            --primary-hover: #6366f1;
+            --secondary-color: #a78bfa;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --success-color: #34d399;
+            --error-color: #f87171;
+            --warning-color: #fbbf24;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.25);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -20,791 +47,969 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            transition: var(--transition);
             min-height: 100vh;
-            color: #1f2937;
-            overflow-x: hidden;
-        }
-
-        .bg-animation {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            overflow: hidden;
-        }
-
-        .bg-animation::before {
-            content: '';
-            position: absolute;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
-            background-size: 50px 50px;
-            animation: moveDots 20s linear infinite;
-            opacity: 0.5;
-        }
-
-        @keyframes moveDots {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(-50px, -50px); }
         }
 
         .container {
-            position: relative;
-            z-index: 1;
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 0 20px;
         }
 
+        /* Header */
         .header {
-            text-align: center;
-            padding: 40px 20px 60px;
-            animation: fadeInDown 0.8s ease-out;
+            background: var(--card-bg);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border-color);
         }
 
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
         }
 
         .logo {
-            display: inline-flex;
+            display: flex;
             align-items: center;
-            gap: 12px;
-            background: rgba(255,255,255,0.2);
-            backdrop-filter: blur(10px);
-            padding: 12px 24px;
-            border-radius: 100px;
-            margin-bottom: 30px;
-            border: 1px solid rgba(255,255,255,0.3);
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
         }
 
         .logo i {
-            font-size: 32px;
-            color: #fff;
+            font-size: 1.8rem;
         }
 
-        .logo span {
-            font-size: 24px;
-            font-weight: 700;
-            color: #fff;
-        }
-
-        h1 {
-            font-size: 3.5rem;
-            font-weight: 800;
-            margin-bottom: 20px;
-            background: linear-gradient(135deg, #fff 0%, #e0e7ff 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .subtitle {
-            font-size: 1.2rem;
-            color: rgba(255,255,255,0.95);
-            margin-bottom: 40px;
-            font-weight: 500;
-        }
-
-        .stats-grid {
+        .controls {
             display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
+            align-items: center;
+            gap: 15px;
         }
 
-        .stat-card {
+        /* Theme Toggle */
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 8px;
+            border-radius: 50%;
+            transition: var(--transition);
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .theme-toggle:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: rotate(15deg);
+        }
+
+        /* Main Content */
+        .hero {
             text-align: center;
-            background: rgba(255,255,255,0.15);
-            backdrop-filter: blur(10px);
-            padding: 20px 30px;
-            border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.2);
-            transition: transform 0.3s ease;
-            min-width: 150px;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            margin-bottom: 2rem;
+            border-radius: 0 0 20px 20px;
         }
 
-        .stat-card:hover {
-            transform: translateY(-5px);
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
         }
 
-        .stat-icon {
-            font-size: 32px;
-            margin-bottom: 10px;
+        .hero p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
         }
 
-        .stat-number {
-            font-size: 32px;
-            font-weight: 800;
-            color: #fff;
-            display: block;
-        }
-
-        .stat-label {
-            font-size: 14px;
-            color: rgba(255,255,255,0.9);
-            margin-top: 5px;
-        }
-
-        .success-stat .stat-icon { color: #10b981; }
-        .failed-stat .stat-icon { color: #ef4444; }
-        .total-stat .stat-icon { color: #f59e0b; }
-        .rate-stat .stat-icon { color: #3b82f6; }
-
-        .main-card {
-            background: rgba(255,255,255,0.95);
-            border-radius: 30px;
-            padding: 40px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            animation: fadeInUp 0.8s ease-out;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .main-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 30px 70px rgba(0,0,0,0.25);
+        /* Upload Section */
+        .upload-section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
         }
 
         .upload-area {
-            border: 3px dashed #c7d2fe;
-            border-radius: 20px;
-            padding: 60px 40px;
+            border: 3px dashed var(--primary-color);
+            border-radius: 10px;
+            padding: 3rem;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
-            background: #f8fafc;
+            transition: var(--transition);
+            background: var(--bg-color);
         }
 
         .upload-area:hover {
-            border-color: #6366f1;
-            background: #eef2ff;
-            transform: scale(1.02);
+            border-color: var(--primary-hover);
+            background: var(--card-bg);
+            transform: translateY(-2px);
         }
 
-        .upload-area.drag-over {
-            border-color: #6366f1;
-            background: #e0e7ff;
-            transform: scale(1.05);
-        }
-
-        .upload-icon {
-            font-size: 64px;
-            color: #6366f1;
-            margin-bottom: 20px;
+        .upload-area i {
+            font-size: 4rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
         }
 
         .upload-area h3 {
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: #1f2937;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
         }
 
         .upload-area p {
-            color: #6b7280;
-            margin-bottom: 20px;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .file-input {
+            display: none;
         }
 
         .upload-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--primary-color);
             color: white;
             border: none;
             padding: 12px 30px;
-            border-radius: 50px;
-            font-size: 16px;
-            font-weight: 600;
+            border-radius: 8px;
+            font-size: 1rem;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: var(--transition);
             display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            font-weight: 500;
         }
 
         .upload-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            margin-bottom: 1rem;
+            color: var(--text-color);
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .process-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            width: 100%;
+        }
+
+        .process-btn:hover:not(:disabled) {
+            background: var(--primary-hover);
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
 
+        .process-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Preview Section */
         .preview-section {
-            margin-top: 40px;
             display: none;
-            animation: fadeIn 0.5s ease-out;
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .image-grid {
+        .preview-images {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
+            gap: 2rem;
+            margin-bottom: 2rem;
         }
 
-        @media (max-width: 768px) {
-            .image-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            h1 {
-                font-size: 2rem;
-            }
-            
-            .stat-card {
-                min-width: 120px;
-                padding: 15px 20px;
-            }
-            
-            .stat-number {
-                font-size: 24px;
-            }
-        }
-
-        .image-card {
-            background: #f9fafb;
-            border-radius: 20px;
-            padding: 20px;
+        .preview-box {
             text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
         }
 
-        .image-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .image-card h4 {
-            margin-bottom: 15px;
-            color: #4b5563;
-            font-size: 18px;
+        .preview-box h4 {
+            margin-bottom: 1rem;
+            color: var(--text-color);
+            font-size: 1.1rem;
         }
 
         .image-container {
-            position: relative;
-            background: #e5e7eb;
-            border-radius: 15px;
+            border-radius: 10px;
             overflow: hidden;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
             min-height: 300px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .preview-img {
+        .image-container img {
             max-width: 100%;
             max-height: 400px;
             object-fit: contain;
+            display: none;
         }
 
-        .loading-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255,255,255,0.9);
-            display: flex;
+        .placeholder {
+            color: var(--text-muted);
+            font-size: 5rem;
+            opacity: 0.3;
+        }
+
+        .download-btn {
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 15px;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .download-btn:hover {
+            background: #0da271;
+            transform: translateY(-2px);
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
         }
 
         .spinner {
             width: 50px;
             height: 50px;
-            border: 4px solid #e5e7eb;
-            border-top-color: #6366f1;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary-color);
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
 
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 12px 30px;
-            border: none;
-            border-radius: 50px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-secondary {
-            background: #e5e7eb;
-            color: #4b5563;
-        }
-
-        .btn-secondary:hover {
-            background: #d1d5db;
-            transform: translateY(-2px);
-        }
-
-        .btn-danger {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-
-        .btn-danger:hover {
-            background: #fecaca;
-            transform: translateY(-2px);
-        }
-
-        .footer {
-            margin-top: 60px;
+        /* Donation Section */
+        .donation-section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
             text-align: center;
-            padding: 30px;
-            color: rgba(255,255,255,0.8);
         }
 
-        .footer a {
+        .donation-section h3 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .donation-section p {
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .qr-container {
+            max-width: 300px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+
+        .qr-placeholder {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 50%, #f0f0f0 50%, #f0f0f0 75%, transparent 75%, transparent);
+            background-size: 20px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 1.2rem;
+            border-radius: 8px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+            background: var(--card-bg);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h3 {
+            color: var(--text-color);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .close-modal:hover {
+            color: var(--error-color);
+        }
+
+        .terms-content {
+            color: var(--text-muted);
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+
+        .terms-content h4 {
+            color: var(--text-color);
+            margin: 1.5rem 0 0.5rem 0;
+        }
+
+        .terms-content ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .accept-btn {
+            background: var(--primary-color);
             color: white;
-            text-decoration: none;
-            margin: 0 10px;
-            transition: opacity 0.3s;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+            font-weight: 500;
         }
 
-        .footer a:hover {
-            opacity: 0.8;
+        .accept-btn:hover {
+            background: var(--primary-hover);
         }
 
+        /* Responsive */
+        @media (max-width: 768px) {
+            .preview-images {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .upload-area {
+                padding: 2rem 1rem;
+            }
+        }
+
+        /* Toast Notifications */
         .toast {
             position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: white;
-            padding: 15px 25px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            bottom: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary-color);
+            display: none;
             z-index: 1000;
-            transform: translateX(400px);
-            transition: transform 0.3s ease;
+            animation: slideIn 0.3s ease;
+            border: 1px solid var(--border-color);
         }
 
-        .toast.show {
-            transform: translateX(0);
-        }
-
-        .toast.success {
-            border-left: 4px solid #10b981;
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
 
         .toast.error {
-            border-left: 4px solid #ef4444;
+            border-left-color: var(--error-color);
         }
 
-        .toast.info {
-            border-left: 4px solid #3b82f6;
-        }
-
-        .refresh-stats {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(255,255,255,0.2);
-            backdrop-filter: blur(10px);
-            padding: 10px 15px;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: white;
-            font-size: 14px;
-            z-index: 100;
-        }
-
-        .refresh-stats:hover {
-            background: rgba(255,255,255,0.3);
-            transform: scale(1.05);
+        .toast.success {
+            border-left-color: var(--success-color);
         }
     </style>
 </head>
 <body>
-    <div class="bg-animation"></div>
-    
-    <div class="container">
-        <div class="header">
-            <div class="logo">
-                <i class="fas fa-magic"></i>
-                <span>BG Remover AI</span>
+    <!-- Terms Modal -->
+    <div class="modal" id="termsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📜 Terms & Privacy Policy</h3>
+                <button class="close-modal" onclick="closeModal()">×</button>
             </div>
-            <h1>Remove Background Instantly</h1>
-            <div class="subtitle">
-                Professional background removal powered by AI • 100% Free • High Quality
-            </div>
-            <div class="stats-grid" id="statsGrid">
-                <div class="stat-card success-stat">
-                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-                    <span class="stat-number" id="successCount">0</span>
-                    <span class="stat-label">Successful</span>
-                </div>
-                <div class="stat-card failed-stat">
-                    <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
-                    <span class="stat-number" id="failedCount">0</span>
-                    <span class="stat-label">Failed</span>
-                </div>
-                <div class="stat-card total-stat">
-                    <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
-                    <span class="stat-number" id="totalCount">0</span>
-                    <span class="stat-label">Total Processed</span>
-                </div>
-                <div class="stat-card rate-stat">
-                    <div class="stat-icon"><i class="fas fa-percent"></i></div>
-                    <span class="stat-number" id="successRate">0%</span>
-                    <span class="stat-label">Success Rate</span>
-                </div>
-            </div>
-        </div>
+            <div class="terms-content">
+                <h4>📋 Terms of Service</h4>
+                <p>Welcome to ImageMagic Pro! By using our service, you agree to:</p>
+                <ul>
+                    <li>Use the service only for legal purposes</li>
+                    <li>Not upload copyrighted material without permission</li>
+                    <li>Accept that uploaded images are processed automatically</li>
+                    <li>Understand that processed images may be stored temporarily</li>
+                </ul>
 
-        <div class="main-card">
-            <div class="upload-area" id="uploadArea">
-                <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                <h3>Drag & Drop Your Image Here</h3>
-                <p>or click to browse (JPG, PNG, WEBP, up to 20MB)</p>
-                <button class="upload-btn" id="uploadBtn">
-                    <i class="fas fa-folder-open"></i>
-                    Choose Image
+                <h4>🔒 Privacy Policy</h4>
+                <p>Your privacy is important to us:</p>
+                <ul>
+                    <li>Images are automatically deleted after 1 hour</li>
+                    <li>We don't share your data with third parties</li>
+                    <li>We collect minimal logs for service improvement</li>
+                    <li>No personal information is stored permanently</li>
+                </ul>
+
+                <h4>⚠️ Disclaimer</h4>
+                <p>This service is provided "as is". We're not responsible for:</p>
+                <ul>
+                    <li>Quality of processed images</li>
+                    <li>Service interruptions</li>
+                    <li>Data loss during processing</li>
+                </ul>
+            </div>
+            <button class="accept-btn" onclick="acceptTerms()">
+                <i class="fas fa-check"></i> I Accept Terms & Continue
+            </button>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <div class="logo">
+                    <i class="fas fa-magic"></i>
+                    <span>ImageMagic Pro</span>
+                </div>
+                <div class="controls">
+                    <button class="theme-toggle" onclick="toggleTheme()">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button class="upload-btn" onclick="showTerms()">
+                        <i class="fas fa-file-contract"></i> Terms
+                    </button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Hero Section -->
+        <section class="hero">
+            <h1>Transform Your Images Instantly</h1>
+            <p>Remove backgrounds and upscale images with AI-powered precision. Fast, free, and easy to use!</p>
+        </section>
+
+        <!-- Upload Section -->
+        <section class="upload-section">
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h3>Upload Your Image</h3>
+                <p>Drag & drop or click to browse</p>
+                <p>Supports: JPG, PNG, WEBP, BMP (Max 20MB)</p>
+                <button class="upload-btn">
+                    <i class="fas fa-folder-open"></i> Choose File
                 </button>
-                <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                <input type="file" id="fileInput" class="file-input" accept="image/*" onchange="handleFileSelect(event)">
+            </div>
+            <div class="file-info" id="fileInfo" style="margin-top: 1rem; display: none;">
+                <p style="color: var(--success-color);">
+                    <i class="fas fa-check-circle"></i> 
+                    <span id="fileName"></span> selected. Choose an action below.
+                </p>
+            </div>
+        </section>
+
+        <!-- Features Grid -->
+        <section class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-eraser"></i>
+                </div>
+                <h3>Remove Background</h3>
+                <p>Instantly remove backgrounds from your images with AI precision. Perfect for product photos, portraits, and more.</p>
+                <button class="process-btn" id="removeBgBtn" onclick="processImage('removebg')" disabled>
+                    <i class="fas fa-magic"></i> Remove Background
+                </button>
             </div>
 
-            <div class="preview-section" id="previewSection">
-                <div class="image-grid">
-                    <div class="image-card">
-                        <h4><i class="fas fa-image"></i> Original Image</h4>
-                        <div class="image-container">
-                            <img id="originalImage" class="preview-img" alt="Original">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-search-plus"></i>
+                </div>
+                <h3>Upscale Image</h3>
+                <p>Enhance image resolution up to 4x without losing quality. Great for enlarging photos and graphics.</p>
+                <button class="process-btn" id="upscaleBtn" onclick="processImage('upscale')" disabled>
+                    <i class="fas fa-expand"></i> Upscale Image
+                </button>
+            </div>
+        </section>
+
+        <!-- Preview Section -->
+        <section class="preview-section" id="previewSection">
+            <h2 style="text-align: center; margin-bottom: 2rem;">Processing Results</h2>
+            <div class="preview-images">
+                <div class="preview-box">
+                    <h4><i class="fas fa-image"></i> Original Image</h4>
+                    <div class="image-container">
+                        <div class="placeholder" id="originalPlaceholder">
+                            <i class="fas fa-image"></i>
                         </div>
-                    </div>
-                    <div class="image-card">
-                        <h4><i class="fas fa-magic"></i> Processed Image</h4>
-                        <div class="image-container" id="processedContainer">
-                            <div style="text-align: center; color: #9ca3af;">
-                                <i class="fas fa-hourglass-half" style="font-size: 48px; margin-bottom: 10px;"></i>
-                                <p>Waiting for processing...</p>
-                            </div>
-                        </div>
+                        <img id="originalImage" alt="Original Image">
                     </div>
                 </div>
-                <div class="action-buttons">
-                    <button class="btn btn-primary" id="downloadBtn" style="display: none;">
-                        <i class="fas fa-download"></i>
-                        Download Result
-                    </button>
-                    <button class="btn btn-secondary" id="newImageBtn">
-                        <i class="fas fa-plus"></i>
-                        New Image
-                    </button>
-                    <button class="btn btn-danger" id="clearBtn" style="display: none;">
-                        <i class="fas fa-trash"></i>
-                        Clear All
-                    </button>
+                <div class="preview-box">
+                    <h4><i class="fas fa-star"></i> Processed Image</h4>
+                    <div class="image-container">
+                        <div class="placeholder" id="processedPlaceholder">
+                            <i class="fas fa-hourglass-half"></i>
+                        </div>
+                        <img id="processedImage" alt="Processed Image">
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <div class="footer">
-            <p>© 2024 BG Remover AI - Free Online Background Removal Tool</p>
-            <div>
-                <a href="/portal.html"><i class="fas fa-home"></i> Home</a>
-                <a href="#" id="privacyLink"><i class="fas fa-shield-alt"></i> Privacy Policy</a>
-                <a href="#" id="termsLink"><i class="fas fa-file-contract"></i> Terms of Service</a>
-                <a href="#" id="contactLink"><i class="fas fa-envelope"></i> Contact</a>
+            <div style="text-align: center;">
+                <button class="download-btn" id="downloadBtn" onclick="downloadImage()" style="display: none;">
+                    <i class="fas fa-download"></i> Download Processed Image
+                </button>
             </div>
-        </div>
-    </div>
+        </section>
 
-    <div class="refresh-stats" id="refreshStatsBtn">
-        <i class="fas fa-sync-alt"></i> Refresh Stats
-    </div>
+        <!-- Loading -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Processing your image... This may take a moment.</p>
+        </div>
+
+        <!-- Donation Section -->
+        <section class="donation-section">
+            <h3><i class="fas fa-heart"></i> Support Our Work</h3>
+            <p>If you find this tool helpful, consider supporting us to keep it free and improve the service. Every donation helps!</p>
+            <div class="qr-container">
+                <div class="qr-placeholder">
+                    <!-- Replace with your actual GCASH QR code -->
+                    <div style="text-align: center;">
+                        <i class="fas fa-qrcode" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <p>GCASH QR Code</p>
+                        <p style="font-size: 0.9rem; margin-top: 1rem;">Scan to donate via GCash</p>
+                    </div>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-muted);">
+                Thank you for your support! ❤️
+            </p>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>© 2024 ImageMagic Pro. All rights reserved.</p>
+            <p style="margin-top: 0.5rem; font-size: 0.9rem;">
+                Made with <i class="fas fa-heart" style="color: #ef4444;"></i> for creators worldwide
+            </p>
+        </div>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
 
     <script>
-        let currentFile = null;
-        let processedUrl = null;
-
-        // Load stats from server
-        async function loadStats() {
-            try {
-                const response = await fetch('/api/counters');
-                const data = await response.json();
-                
-                if (data.success && data.stats) {
-                    document.getElementById('successCount').textContent = data.stats.successful.toLocaleString();
-                    document.getElementById('failedCount').textContent = data.stats.failed.toLocaleString();
-                    document.getElementById('totalCount').textContent = data.stats.total.toLocaleString();
-                    document.getElementById('successRate').textContent = `${data.stats.successRate}%`;
-                }
-            } catch (error) {
-                console.error('Error loading stats:', error);
-            }
-        }
-
-        // Update stats locally after processing
-        function updateStatsLocally(success) {
-            const successEl = document.getElementById('successCount');
-            const failedEl = document.getElementById('failedCount');
-            const totalEl = document.getElementById('totalCount');
-            const rateEl = document.getElementById('successRate');
-            
-            let successCount = parseInt(successEl.textContent.replace(/,/g, '')) || 0;
-            let failedCount = parseInt(failedEl.textContent.replace(/,/g, '')) || 0;
-            
-            if (success) {
-                successCount++;
-            } else {
-                failedCount++;
-            }
-            
-            const total = successCount + failedCount;
-            const rate = total > 0 ? ((successCount / total) * 100).toFixed(1) : 0;
-            
-            successEl.textContent = successCount.toLocaleString();
-            failedEl.textContent = failedCount.toLocaleString();
-            totalEl.textContent = total.toLocaleString();
-            rateEl.textContent = `${rate}%`;
-        }
-
-        // Elements
-        const uploadArea = document.getElementById('uploadArea');
+        // DOM Elements
+        const themeToggle = document.querySelector('.theme-toggle i');
         const fileInput = document.getElementById('fileInput');
-        const uploadBtn = document.getElementById('uploadBtn');
-        const previewSection = document.getElementById('previewSection');
         const originalImage = document.getElementById('originalImage');
-        const processedContainer = document.getElementById('processedContainer');
+        const processedImage = document.getElementById('processedImage');
+        const originalPlaceholder = document.getElementById('originalPlaceholder');
+        const processedPlaceholder = document.getElementById('processedPlaceholder');
+        const previewSection = document.getElementById('previewSection');
+        const loading = document.getElementById('loading');
+        const toast = document.getElementById('toast');
+        const fileName = document.getElementById('fileName');
+        const fileInfo = document.getElementById('fileInfo');
+        const removeBgBtn = document.getElementById('removeBgBtn');
+        const upscaleBtn = document.getElementById('upscaleBtn');
         const downloadBtn = document.getElementById('downloadBtn');
-        const newImageBtn = document.getElementById('newImageBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const refreshStatsBtn = document.getElementById('refreshStatsBtn');
+        const termsModal = document.getElementById('termsModal');
 
-        // Toast function
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.innerHTML = `
-                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
-                <span>${message}</span>
-            `;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.classList.add('show');
-            }, 10);
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+        let currentFile = null;
+        let processedImageUrl = null;
+
+        // Theme Management
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            html.setAttribute('data-theme', newTheme);
+            themeToggle.className = newTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            localStorage.setItem('theme', newTheme);
+
+            showToast(`Switched to ${newTheme} theme`, 'success');
         }
 
-        // Load initial stats
-        loadStats();
-        
-        // Refresh stats button
-        refreshStatsBtn.addEventListener('click', () => {
-            loadStats();
-            showToast('Stats refreshed!', 'info');
-        });
+        // Initialize theme from localStorage or system preference
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
 
-        // Upload handlers
-        uploadBtn.addEventListener('click', () => fileInput.click());
-        uploadArea.addEventListener('click', () => fileInput.click());
-        
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files && e.target.files[0]) {
-                handleFile(e.target.files[0]);
-            }
-        });
+            document.documentElement.setAttribute('data-theme', theme);
+            themeToggle.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+        }
 
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('drag-over');
-        });
-        
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('drag-over');
-        });
-        
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('drag-over');
-            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                handleFile(e.dataTransfer.files[0]);
-            }
-        });
+        // File Handling
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-        async function handleFile(file) {
-            if (!file.type.startsWith('image/')) {
-                showToast('Please upload an image file', 'error');
+            if (!file.type.match('image.*')) {
+                showToast('Please select an image file', 'error');
                 return;
             }
-            
+
             if (file.size > 20 * 1024 * 1024) {
                 showToast('File size must be less than 20MB', 'error');
                 return;
             }
-            
+
             currentFile = file;
-            
+            fileName.textContent = `${file.name} (${formatFileSize(file.size)})`;
+            fileInfo.style.display = 'block';
+
+            // Enable buttons
+            removeBgBtn.disabled = false;
+            upscaleBtn.disabled = false;
+
+            // Preview original image
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = function(e) {
                 originalImage.src = e.target.result;
-                previewSection.style.display = 'block';
-                
-                processedContainer.innerHTML = `
-                    <div class="loading-overlay">
-                        <div class="spinner"></div>
-                        <p>Removing background...</p>
-                    </div>
-                `;
-                
-                processImage(file);
+                originalImage.style.display = 'block';
+                originalPlaceholder.style.display = 'none';
             };
             reader.readAsDataURL(file);
-            
-            previewSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            showToast('Image loaded successfully!', 'success');
         }
 
-        async function processImage(file) {
+        // Image Processing
+        async function processImage(type) {
+            if (!currentFile) {
+                showToast('Please select an image first', 'error');
+                return;
+            }
+
+            // Check terms acceptance
+            if (!getCookie('termsAccepted')) {
+                showTerms();
+                showToast('Please accept the terms first', 'error');
+                return;
+            }
+
+            // Show loading and preview
+            loading.style.display = 'block';
+            previewSection.style.display = 'block';
+            downloadBtn.style.display = 'none';
+            processedImage.style.display = 'none';
+            processedPlaceholder.style.display = 'block';
+            processedPlaceholder.innerHTML = '<i class="fas fa-hourglass-half"></i>';
+
             const formData = new FormData();
-            formData.append('image', file);
-            
+            formData.append('image', currentFile);
+
             try {
-                const response = await fetch('/api/removebg', {
+                const endpoint = type === 'removebg' ? '/api/removebg' : '/api/upscale';
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     body: formData
                 });
-                
-                const data = await response.json();
-                
-                if (data.success && data.url) {
-                    processedUrl = data.url;
-                    processedContainer.innerHTML = `<img src="${data.url}" class="preview-img" alt="Processed">`;
-                    downloadBtn.style.display = 'inline-flex';
-                    clearBtn.style.display = 'inline-flex';
-                    
-                    // Update stats from server response
-                    if (data.stats) {
-                        document.getElementById('successCount').textContent = data.stats.successful.toLocaleString();
-                        document.getElementById('failedCount').textContent = data.stats.failed.toLocaleString();
-                        document.getElementById('totalCount').textContent = data.stats.total.toLocaleString();
-                        const rate = data.stats.total > 0 ? ((data.stats.successful / data.stats.total) * 100).toFixed(1) : 0;
-                        document.getElementById('successRate').textContent = `${rate}%`;
-                    } else {
-                        loadStats(); // Fallback to reload stats
-                    }
-                    
-                    showToast('Background removed successfully!', 'success');
+
+                const result = await response.json();
+
+                if (result.success && result.url) {
+                    processedImageUrl = result.url;
+                    processedImage.src = result.url;
+                    processedImage.style.display = 'block';
+                    processedPlaceholder.style.display = 'none';
+                    downloadBtn.style.display = 'block';
+
+                    showToast(result.message || 'Image processed successfully!', 'success');
                 } else {
-                    throw new Error(data.error || 'Processing failed');
+                    throw new Error(result.error || 'Processing failed');
                 }
             } catch (error) {
-                console.error('Error processing image:', error);
-                processedContainer.innerHTML = `
-                    <div style="text-align: center; color: #ef4444; padding: 40px;">
-                        <i class="fas fa-exclamation-circle" style="font-size: 48px; margin-bottom: 10px;"></i>
-                        <p>Failed to process image. Please try again.</p>
-                    </div>
-                `;
-                showToast('Failed to remove background. Please try again.', 'error');
-                
-                // Reload stats to show updated failed count
-                setTimeout(() => loadStats(), 1000);
+                console.error('Processing error:', error);
+                processedPlaceholder.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+                showToast('Failed to process image. Please try again.', 'error');
+            } finally {
+                loading.style.display = 'none';
             }
         }
 
-        downloadBtn.addEventListener('click', async () => {
-            if (processedUrl) {
-                try {
-                    const response = await fetch(`/api/download?url=${encodeURIComponent(processedUrl)}`);
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `processed_${Date.now()}.png`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                    showToast('Download started!', 'success');
-                } catch (error) {
-                    showToast('Failed to download image', 'error');
-                }
+        // Download Image
+        async function downloadImage() {
+            if (!processedImageUrl) {
+                showToast('No processed image available', 'error');
+                return;
             }
-        });
 
-        newImageBtn.addEventListener('click', () => {
-            fileInput.click();
-        });
+            try {
+                const response = await fetch(`/api/download?url=${encodeURIComponent(processedImageUrl)}`);
 
-        clearBtn.addEventListener('click', () => {
-            currentFile = null;
-            processedUrl = null;
-            previewSection.style.display = 'none';
-            fileInput.value = '';
-            showToast('Cleared successfully', 'info');
-        });
+                if (!response.ok) {
+                    throw new Error('Download failed');
+                }
 
-        // Auto-refresh stats every 30 seconds
-        setInterval(loadStats, 30000);
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `processed_image_${Date.now()}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                showToast('Image downloaded successfully!', 'success');
+            } catch (error) {
+                console.error('Download error:', error);
+                showToast('Failed to download image', 'error');
+            }
+        }
+
+        // Terms Modal Functions
+        function showTerms() {
+            termsModal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            termsModal.style.display = 'none';
+        }
+
+        function acceptTerms() {
+            fetch('/api/accept-terms', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    setCookie('termsAccepted', 'true', 365);
+                    closeModal();
+                    showToast('Terms accepted! You can now use all features.', 'success');
+                }
+            })
+            .catch(error => {
+                console.error('Error accepting terms:', error);
+                showToast('Failed to accept terms. Please try again.', 'error');
+            });
+        }
+
+        // Utility Functions
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function showToast(message, type = 'info') {
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.style.display = 'block';
+
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        function setCookie(name, value, days) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = `expires=${d.toUTCString()}`;
+            document.cookie = `${name}=${value};${expires};path=/;SameSite=Lax`;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+
+            // Check terms on load
+            if (!getCookie('termsAccepted')) {
+                setTimeout(() => {
+                    showTerms();
+                }, 1000);
+            }
+
+            // Drag and drop support
+            const uploadArea = document.querySelector('.upload-area');
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--primary-hover)';
+                uploadArea.style.transform = 'scale(1.02)';
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.borderColor = 'var(--primary-color)';
+                uploadArea.style.transform = 'scale(1)';
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--primary-color)';
+                uploadArea.style.transform = 'scale(1)';
+
+                if (e.dataTransfer.files.length) {
+                    const file = e.dataTransfer.files[0];
+                    const event = { target: { files: [file] } };
+                    handleFileSelect(event);
+                }
+            });
+
+            // Close modal on outside click
+            window.onclick = function(event) {
+                if (event.target === termsModal) {
+                    closeModal();
+                }
+            };
+
+            // Show initial info
+            fetch('/api/info')
+                .then(res => res.json())
+                .then(data => {
+                    console.log('Server info:', data);
+                });
+        });
     </script>
 </body>
 </html>

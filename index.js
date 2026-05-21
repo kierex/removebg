@@ -104,7 +104,7 @@ const cleanupOldFiles = () => {
   })
 }
 
-// API Routes
+// API Routes - Only removebg endpoint remains
 app.post("/api/removebg", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
@@ -133,38 +133,6 @@ app.post("/api/removebg", upload.single("image"), async (req, res) => {
     res.status(500).json({ 
       success: false, 
       error: "Failed to remove background. Please try again." 
-    })
-  }
-})
-
-app.post("/api/upscale", upload.single("image"), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "No image file provided" 
-      })
-    }
-
-    const imgUrl = fileURL(req, req.file)
-    const apiUrl = `https://api-library-kohi.onrender.com/api/upscale?url=${encodeURIComponent(imgUrl)}`
-
-    const response = await axios.get(apiUrl, { timeout: 30000 })
-
-    if (response.data?.data?.url) {
-      res.json({ 
-        success: true, 
-        url: response.data.data.url,
-        message: "Image upscaled successfully!"
-      })
-    } else {
-      throw new Error("Invalid response from upscale service")
-    }
-  } catch (error) {
-    console.error("Upscale error:", error.message)
-    res.status(500).json({ 
-      success: false, 
-      error: "Failed to upscale image. Please try again." 
     })
   }
 })

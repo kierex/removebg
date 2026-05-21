@@ -1,14 +1,13 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ImageMagic Pro | Background Removal & Upscale</title>
+    <title>ImageMagic Pro | Background Removal</title>
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
         :root {
-            /* Light Theme */
             --primary-color: #6366f1;
             --primary-hover: #4f46e5;
             --secondary-color: #8b5cf6;
@@ -22,10 +21,11 @@
             --warning-color: #f59e0b;
             --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             --transition: all 0.3s ease;
+            --gradient-start: #6366f1;
+            --gradient-end: #8b5cf6;
         }
 
         [data-theme="dark"] {
-            /* Dark Theme */
             --primary-color: #818cf8;
             --primary-hover: #6366f1;
             --secondary-color: #a78bfa;
@@ -38,6 +38,8 @@
             --error-color: #f87171;
             --warning-color: #fbbf24;
             --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.25);
+            --gradient-start: #818cf8;
+            --gradient-end: #a78bfa;
         }
 
         * {
@@ -59,6 +61,96 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
+        }
+
+        /* Portal Hero Section */
+        .portal-hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .portal-hero::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 10s ease infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-25%, -25%) scale(1); opacity: 0.5; }
+            50% { transform: translate(-25%, -25%) scale(1.2); opacity: 0.3; }
+        }
+
+        .portal-content {
+            position: relative;
+            z-index: 2;
+            padding: 2rem;
+        }
+
+        .portal-logo {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            animation: float 3s ease infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .portal-content h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            color: white;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .portal-content p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            color: rgba(255,255,255,0.9);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .proceed-btn {
+            background: white;
+            color: var(--primary-color);
+            border: none;
+            padding: 14px 40px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .proceed-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            gap: 15px;
+        }
+
+        /* Dashboard (initially hidden) */
+        .dashboard {
+            display: none;
+        }
+
+        .dashboard.active {
+            display: block;
         }
 
         /* Header */
@@ -117,26 +209,24 @@
             transform: rotate(15deg);
         }
 
-        /* Main Content */
-        .hero {
+        /* Dashboard Hero */
+        .dashboard-hero {
             text-align: center;
-            padding: 3rem 0;
+            padding: 2rem 0;
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             color: white;
             margin-bottom: 2rem;
             border-radius: 0 0 20px 20px;
         }
 
-        .hero h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
+        .dashboard-hero h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
         }
 
-        .hero p {
-            font-size: 1.1rem;
+        .dashboard-hero p {
+            font-size: 1rem;
             opacity: 0.9;
-            max-width: 600px;
-            margin: 0 auto;
         }
 
         /* Upload Section */
@@ -206,14 +296,7 @@
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
-        /* Features Grid */
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
+        /* Feature Card */
         .feature-card {
             background: var(--card-bg);
             border-radius: 15px;
@@ -222,6 +305,7 @@
             box-shadow: var(--shadow);
             border: 1px solid var(--border-color);
             transition: var(--transition);
+            margin-bottom: 2rem;
         }
 
         .feature-card:hover {
@@ -360,52 +444,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Donation Section */
-        .donation-section {
-            background: var(--card-bg);
-            border-radius: 15px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border-color);
-            text-align: center;
-        }
-
-        .donation-section h3 {
-            color: var(--primary-color);
-            margin-bottom: 1rem;
-        }
-
-        .donation-section p {
-            color: var(--text-muted);
-            margin-bottom: 1.5rem;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .qr-container {
-            max-width: 300px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: var(--shadow);
-        }
-
-        .qr-placeholder {
-            width: 100%;
-            height: 300px;
-            background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 50%, #f0f0f0 50%, #f0f0f0 75%, transparent 75%, transparent);
-            background-size: 20px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #666;
-            font-size: 1.2rem;
-            border-radius: 8px;
-        }
-
         /* Footer */
         .footer {
             text-align: center;
@@ -413,6 +451,7 @@
             color: var(--text-muted);
             border-top: 1px solid var(--border-color);
             background: var(--card-bg);
+            margin-top: 2rem;
         }
 
         /* Modal */
@@ -497,22 +536,6 @@
             background: var(--primary-hover);
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .preview-images {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-
-            .hero h1 {
-                font-size: 2rem;
-            }
-
-            .upload-area {
-                padding: 2rem 1rem;
-            }
-        }
-
         /* Toast Notifications */
         .toast {
             position: fixed;
@@ -547,6 +570,22 @@
 
         .toast.success {
             border-left-color: var(--success-color);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .preview-images {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .portal-content h1 {
+                font-size: 2rem;
+            }
+
+            .upload-area {
+                padding: 2rem 1rem;
+            }
         }
     </style>
 </head>
@@ -591,150 +630,138 @@
         </div>
     </div>
 
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <nav class="nav">
-                <div class="logo">
-                    <i class="fas fa-magic"></i>
-                    <span>ImageMagic Pro</span>
-                </div>
-                <div class="controls">
-                    <button class="theme-toggle" onclick="toggleTheme()">
-                        <i class="fas fa-moon"></i>
-                    </button>
-                    <button class="upload-btn" onclick="showTerms()">
-                        <i class="fas fa-file-contract"></i> Terms
-                    </button>
-                </div>
-            </nav>
+    <!-- Portal Section (Greeting) -->
+    <section class="portal-hero" id="portalSection">
+        <div class="portal-content">
+            <div class="portal-logo">
+                <i class="fas fa-magic"></i>
+            </div>
+            <h1>Welcome to ImageMagic Pro</h1>
+            <p>Remove backgrounds from your images instantly with AI-powered precision. Fast, free, and easy to use!</p>
+            <button class="proceed-btn" onclick="enterDashboard()">
+                <span>Proceed to Dashboard</span>
+                <i class="fas fa-arrow-right"></i>
+            </button>
         </div>
-    </header>
+    </section>
 
-    <!-- Main Content -->
-    <main class="container">
-        <!-- Hero Section -->
-        <section class="hero">
-            <h1>Transform Your Images Instantly</h1>
-            <p>Remove backgrounds and upscale images with AI-powered precision. Fast, free, and easy to use!</p>
-        </section>
-
-        <!-- Upload Section -->
-        <section class="upload-section">
-            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <h3>Upload Your Image</h3>
-                <p>Drag & drop or click to browse</p>
-                <p>Supports: JPG, PNG, WEBP, BMP (Max 20MB)</p>
-                <button class="upload-btn">
-                    <i class="fas fa-folder-open"></i> Choose File
-                </button>
-                <input type="file" id="fileInput" class="file-input" accept="image/*" onchange="handleFileSelect(event)">
+    <!-- Dashboard Section -->
+    <div class="dashboard" id="dashboardSection">
+        <!-- Header -->
+        <header class="header">
+            <div class="container">
+                <nav class="nav">
+                    <div class="logo">
+                        <i class="fas fa-magic"></i>
+                        <span>ImageMagic Pro</span>
+                    </div>
+                    <div class="controls">
+                        <button class="theme-toggle" onclick="toggleTheme()">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                        <button class="upload-btn" onclick="showTerms()">
+                            <i class="fas fa-file-contract"></i> Terms
+                        </button>
+                    </div>
+                </nav>
             </div>
-            <div class="file-info" id="fileInfo" style="margin-top: 1rem; display: none;">
-                <p style="color: var(--success-color);">
-                    <i class="fas fa-check-circle"></i> 
-                    <span id="fileName"></span> selected. Choose an action below.
-                </p>
-            </div>
-        </section>
+        </header>
 
-        <!-- Features Grid -->
-        <section class="features-grid">
+        <!-- Main Content -->
+        <main class="container">
+            <!-- Dashboard Hero -->
+            <section class="dashboard-hero">
+                <h1>Background Removal Studio</h1>
+                <p>Upload an image and remove the background in seconds</p>
+            </section>
+
+            <!-- Upload Section -->
+            <section class="upload-section">
+                <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h3>Upload Your Image</h3>
+                    <p>Drag & drop or click to browse</p>
+                    <p>Supports: JPG, PNG, WEBP, BMP (Max 20MB)</p>
+                    <button class="upload-btn">
+                        <i class="fas fa-folder-open"></i> Choose File
+                    </button>
+                    <input type="file" id="fileInput" class="file-input" accept="image/*" onchange="handleFileSelect(event)">
+                </div>
+                <div class="file-info" id="fileInfo" style="margin-top: 1rem; display: none;">
+                    <p style="color: var(--success-color);">
+                        <i class="fas fa-check-circle"></i> 
+                        <span id="fileName"></span> selected. Ready to remove background.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Feature Card -->
             <div class="feature-card">
                 <div class="feature-icon">
                     <i class="fas fa-eraser"></i>
                 </div>
                 <h3>Remove Background</h3>
                 <p>Instantly remove backgrounds from your images with AI precision. Perfect for product photos, portraits, and more.</p>
-                <button class="process-btn" id="removeBgBtn" onclick="processImage('removebg')" disabled>
+                <button class="process-btn" id="removeBgBtn" onclick="processImage()" disabled>
                     <i class="fas fa-magic"></i> Remove Background
                 </button>
             </div>
 
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-search-plus"></i>
-                </div>
-                <h3>Upscale Image</h3>
-                <p>Enhance image resolution up to 4x without losing quality. Great for enlarging photos and graphics.</p>
-                <button class="process-btn" id="upscaleBtn" onclick="processImage('upscale')" disabled>
-                    <i class="fas fa-expand"></i> Upscale Image
-                </button>
-            </div>
-        </section>
-
-        <!-- Preview Section -->
-        <section class="preview-section" id="previewSection">
-            <h2 style="text-align: center; margin-bottom: 2rem;">Processing Results</h2>
-            <div class="preview-images">
-                <div class="preview-box">
-                    <h4><i class="fas fa-image"></i> Original Image</h4>
-                    <div class="image-container">
-                        <div class="placeholder" id="originalPlaceholder">
-                            <i class="fas fa-image"></i>
+            <!-- Preview Section -->
+            <section class="preview-section" id="previewSection">
+                <h2 style="text-align: center; margin-bottom: 2rem;">Processing Results</h2>
+                <div class="preview-images">
+                    <div class="preview-box">
+                        <h4><i class="fas fa-image"></i> Original Image</h4>
+                        <div class="image-container">
+                            <div class="placeholder" id="originalPlaceholder">
+                                <i class="fas fa-image"></i>
+                            </div>
+                            <img id="originalImage" alt="Original Image">
                         </div>
-                        <img id="originalImage" alt="Original Image">
                     </div>
-                </div>
-                <div class="preview-box">
-                    <h4><i class="fas fa-star"></i> Processed Image</h4>
-                    <div class="image-container">
-                        <div class="placeholder" id="processedPlaceholder">
-                            <i class="fas fa-hourglass-half"></i>
+                    <div class="preview-box">
+                        <h4><i class="fas fa-star"></i> Processed Image (No Background)</h4>
+                        <div class="image-container">
+                            <div class="placeholder" id="processedPlaceholder">
+                                <i class="fas fa-hourglass-half"></i>
+                            </div>
+                            <img id="processedImage" alt="Processed Image">
                         </div>
-                        <img id="processedImage" alt="Processed Image">
                     </div>
                 </div>
-            </div>
-            <div style="text-align: center;">
-                <button class="download-btn" id="downloadBtn" onclick="downloadImage()" style="display: none;">
-                    <i class="fas fa-download"></i> Download Processed Image
-                </button>
-            </div>
-        </section>
-
-        <!-- Loading -->
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>Processing your image... This may take a moment.</p>
-        </div>
-
-        <!-- Donation Section -->
-        <section class="donation-section">
-            <h3><i class="fas fa-heart"></i> Support Our Work</h3>
-            <p>If you find this tool helpful, consider supporting us to keep it free and improve the service. Every donation helps!</p>
-            <div class="qr-container">
-                <div class="qr-placeholder">
-                    <!-- Replace with your actual GCASH QR code -->
-                    <div style="text-align: center;">
-                        <i class="fas fa-qrcode" style="font-size: 3rem; margin-bottom: 1rem;"></i>
-                        <p>GCASH QR Code</p>
-                        <p style="font-size: 0.9rem; margin-top: 1rem;">Scan to donate via GCash</p>
-                    </div>
+                <div style="text-align: center;">
+                    <button class="download-btn" id="downloadBtn" onclick="downloadImage()" style="display: none;">
+                        <i class="fas fa-download"></i> Download Processed Image
+                    </button>
                 </div>
-            </div>
-            <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-muted);">
-                Thank you for your support! ❤️
-            </p>
-        </section>
-    </main>
+            </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <p>© 2024 ImageMagic Pro. All rights reserved.</p>
-            <p style="margin-top: 0.5rem; font-size: 0.9rem;">
-                Made with <i class="fas fa-heart" style="color: #ef4444;"></i> for creators worldwide
-            </p>
-        </div>
-    </footer>
+            <!-- Loading -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Removing background... This may take a moment.</p>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <p>© 2024 ImageMagic Pro. All rights reserved.</p>
+                <p style="margin-top: 0.5rem; font-size: 0.9rem;">
+                    Made with <i class="fas fa-heart" style="color: #ef4444;"></i> for creators worldwide
+                </p>
+            </div>
+        </footer>
+    </div>
 
     <!-- Toast Notification -->
     <div class="toast" id="toast"></div>
 
     <script>
         // DOM Elements
+        const portalSection = document.getElementById('portalSection');
+        const dashboardSection = document.getElementById('dashboardSection');
         const themeToggle = document.querySelector('.theme-toggle i');
         const fileInput = document.getElementById('fileInput');
         const originalImage = document.getElementById('originalImage');
@@ -747,12 +774,25 @@
         const fileName = document.getElementById('fileName');
         const fileInfo = document.getElementById('fileInfo');
         const removeBgBtn = document.getElementById('removeBgBtn');
-        const upscaleBtn = document.getElementById('upscaleBtn');
         const downloadBtn = document.getElementById('downloadBtn');
         const termsModal = document.getElementById('termsModal');
 
         let currentFile = null;
         let processedImageUrl = null;
+
+        // Portal to Dashboard transition
+        function enterDashboard() {
+            // Check terms
+            if (!getCookie('termsAccepted')) {
+                showTerms();
+                showToast('Please accept the terms first', 'error');
+                return;
+            }
+            
+            portalSection.style.display = 'none';
+            dashboardSection.classList.add('active');
+            showToast('Welcome to the Background Removal Studio!', 'success');
+        }
 
         // Theme Management
         function toggleTheme() {
@@ -761,20 +801,24 @@
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
 
             html.setAttribute('data-theme', newTheme);
-            themeToggle.className = newTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            if (themeToggle) {
+                themeToggle.className = newTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            }
             localStorage.setItem('theme', newTheme);
 
             showToast(`Switched to ${newTheme} theme`, 'success');
         }
 
-        // Initialize theme from localStorage or system preference
+        // Initialize theme
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
             const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             const theme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
 
             document.documentElement.setAttribute('data-theme', theme);
-            themeToggle.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            if (themeToggle) {
+                themeToggle.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            }
         }
 
         // File Handling
@@ -795,10 +839,7 @@
             currentFile = file;
             fileName.textContent = `${file.name} (${formatFileSize(file.size)})`;
             fileInfo.style.display = 'block';
-
-            // Enable buttons
             removeBgBtn.disabled = false;
-            upscaleBtn.disabled = false;
 
             // Preview original image
             const reader = new FileReader();
@@ -809,24 +850,27 @@
             };
             reader.readAsDataURL(file);
 
+            // Hide previous results
+            previewSection.style.display = 'none';
+            processedImageUrl = null;
+            downloadBtn.style.display = 'none';
+
             showToast('Image loaded successfully!', 'success');
         }
 
-        // Image Processing
-        async function processImage(type) {
+        // Process Image (Remove Background)
+        async function processImage() {
             if (!currentFile) {
                 showToast('Please select an image first', 'error');
                 return;
             }
 
-            // Check terms acceptance
             if (!getCookie('termsAccepted')) {
                 showTerms();
                 showToast('Please accept the terms first', 'error');
                 return;
             }
 
-            // Show loading and preview
             loading.style.display = 'block';
             previewSection.style.display = 'block';
             downloadBtn.style.display = 'none';
@@ -838,8 +882,7 @@
             formData.append('image', currentFile);
 
             try {
-                const endpoint = type === 'removebg' ? '/api/removebg' : '/api/upscale';
-                const response = await fetch(endpoint, {
+                const response = await fetch('/api/removebg', {
                     method: 'POST',
                     body: formData
                 });
@@ -853,14 +896,14 @@
                     processedPlaceholder.style.display = 'none';
                     downloadBtn.style.display = 'block';
 
-                    showToast(result.message || 'Image processed successfully!', 'success');
+                    showToast(result.message || 'Background removed successfully!', 'success');
                 } else {
                     throw new Error(result.error || 'Processing failed');
                 }
             } catch (error) {
                 console.error('Processing error:', error);
                 processedPlaceholder.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
-                showToast('Failed to process image. Please try again.', 'error');
+                showToast('Failed to remove background. Please try again.', 'error');
             } finally {
                 loading.style.display = 'none';
             }
@@ -884,7 +927,7 @@
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `processed_image_${Date.now()}.png`;
+                a.download = `no_bg_${Date.now()}.png`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -973,28 +1016,30 @@
 
             // Drag and drop support
             const uploadArea = document.querySelector('.upload-area');
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.style.borderColor = 'var(--primary-hover)';
-                uploadArea.style.transform = 'scale(1.02)';
-            });
+            if (uploadArea) {
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.style.borderColor = 'var(--primary-hover)';
+                    uploadArea.style.transform = 'scale(1.02)';
+                });
 
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.style.borderColor = 'var(--primary-color)';
-                uploadArea.style.transform = 'scale(1)';
-            });
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.style.borderColor = 'var(--primary-color)';
+                    uploadArea.style.transform = 'scale(1)';
+                });
 
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.style.borderColor = 'var(--primary-color)';
-                uploadArea.style.transform = 'scale(1)';
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.style.borderColor = 'var(--primary-color)';
+                    uploadArea.style.transform = 'scale(1)';
 
-                if (e.dataTransfer.files.length) {
-                    const file = e.dataTransfer.files[0];
-                    const event = { target: { files: [file] } };
-                    handleFileSelect(event);
-                }
-            });
+                    if (e.dataTransfer.files.length) {
+                        const file = e.dataTransfer.files[0];
+                        const event = { target: { files: [file] } };
+                        handleFileSelect(event);
+                    }
+                });
+            }
 
             // Close modal on outside click
             window.onclick = function(event) {
@@ -1002,13 +1047,6 @@
                     closeModal();
                 }
             };
-
-            // Show initial info
-            fetch('/api/info')
-                .then(res => res.json())
-                .then(data => {
-                    console.log('Server info:', data);
-                });
         });
     </script>
 </body>

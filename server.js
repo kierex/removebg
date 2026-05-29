@@ -6,7 +6,6 @@ const helmet = require('helmet');
 const NodeCache = require('node-cache');
 const os = require('os');
 const path = require('path');
-const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,21 +14,18 @@ const PORT = process.env.PORT || 3000;
 const config = {
   facebook: {
     api_key: "882a8490361da98702bf97a021ddc14d",
-    secret: "62f8ce9f74b12f84c123cc23437a4a32",
-    profilePictureUrl: "https://iili.io/C2D1gTX.jpg"
+    secret: "62f8ce9f74b12f84c123cc23437a4a32"
   },
   rateLimit: {
     windowMs: 60 * 1000, // 1 minute
     maxAccounts: 5, // max 5 accounts per minute
-    maxEmailGen: 30, // max 30 email generations per minute
-    maxPhoneGen: 20 // max 20 phone generations per minute
+    maxEmailGen: 30 // max 30 email generations per minute
   }
 };
 
 // ==================== CACHE SETUP ====================
 const accountCache = new NodeCache({ stdTTL: 3600, checkperiod: 600 });
 const emailCache = new NodeCache({ stdTTL: 1800, checkperiod: 300 });
-const phoneCache = new NodeCache({ stdTTL: 1800, checkperiod: 300 });
 const rateLimitCache = new NodeCache({ stdTTL: 60, checkperiod: 30 });
 
 // ==================== MIDDLEWARE ====================
@@ -51,20 +47,7 @@ function rateLimiter(type) {
     const key = `${type}_${ip}`;
     const current = rateLimitCache.get(key) || 0;
 
-    let max;
-    switch(type) {
-      case 'account':
-        max = config.rateLimit.maxAccounts;
-        break;
-      case 'email':
-        max = config.rateLimit.maxEmailGen;
-        break;
-      case 'phone':
-        max = config.rateLimit.maxPhoneGen;
-        break;
-      default:
-        max = 30;
-    }
+    const max = type === 'account' ? config.rateLimit.maxAccounts : config.rateLimit.maxEmailGen;
 
     if (current >= max) {
       return res.status(429).json({
@@ -119,48 +102,6 @@ const utils = {
       firstName: this.filipinoFirstNames[Math.floor(Math.random() * this.filipinoFirstNames.length)],
       lastName: this.filipinoSurnames[Math.floor(Math.random() * this.filipinoSurnames.length)]
     };
-  },
-
-  // Bangladesh phone number prefixes
-  bangladeshPrefixes: ['017', '018', '019', '015', '016', '013', '014'],
-  
-  generateBangladeshNumber() {
-    const prefix = this.bangladeshPrefixes[Math.floor(Math.random() * this.bangladeshPrefixes.length)];
-    const number = Math.floor(Math.random() * 10000000).toString().padStart(8, '0');
-    return `${prefix}${number}`;
-  },
-
-  // Extract cookies from response headers
-  extractCookies(headers) {
-    const cookies = [];
-    const setCookie = headers['set-cookie'];
-    if (setCookie) {
-      setCookie.forEach(cookie => {
-        const match = cookie.match(/([^=]+)=([^;]+)/);
-        if (match) {
-          cookies.push({
-            name: match[1],
-            value: match[2],
-            fullString: cookie.split(';')[0]
-          });
-        }
-      });
-    }
-    return cookies;
-  },
-
-  // Generate access token (simulated)
-  generateAccessToken(userId, sessionId) {
-    // This is a simulation - in production you would get real tokens from Facebook
-    const tokenData = {
-      user_id: userId,
-      session_id: sessionId,
-      app_id: "com.facebook.katana",
-      issued_at: Date.now(),
-      expires_at: Date.now() + (3600 * 24 * 30 * 1000), // 30 days
-      token: crypto.randomBytes(32).toString('hex')
-    };
-    return Buffer.from(JSON.stringify(tokenData)).toString('base64');
   }
 };
 
@@ -168,18 +109,25 @@ const utils = {
 const facebook = {
   async createAccount(options = {}) {
     try {
+      // Use provided name or generate random Filipino name
+      let { firstName, lastName } = options;
+      
+      if (!firstName || firstName.trim() === '') {
+        firstName = utils.getRandomName().firstName;
+      }
+      if (!lastName || lastName.trim() === '') {
+        lastName = utils.getRandomName().lastName;
+      }
+      
       const {
-        firstName = utils.getRandomName().firstName,
-        lastName = utils.getRandomName().lastName,
         email,
-        phone,
         password = utils.generateRandomPassword(12),
         gender = Math.random() < 0.5 ? "M" : "F",
         birthday = utils.getRandomDate()
       } = options;
 
-      if (!email && !phone) {
-        throw new Error('Either email or phone is required');
+      if (!email) {
+        throw new Error('Email is required');
       }
 
       const birthYear = birthday.getFullYear();
@@ -191,27 +139,20 @@ const facebook = {
         api_key: config.facebook.api_key,
         attempt_login: true,
         birthday: formattedBirthday,
-        client_country_code: "BD",
+        client_country_code: "EN",
         fb_api_caller_class: "com.facebook.registration.protocol.RegisterAccountMethod",
         fb_api_req_friendly_name: "registerAccount",
         firstname: firstName,
         format: "json",
         gender: gender,
         lastname: lastName,
+        email: email,
         locale: "en_US",
         method: "user.register",
         password: password,
         reg_instance: utils.generateRandomString(32),
         return_multiple_errors: true
       };
-
-      // Add email or phone to request
-      if (email) {
-        req.email = email;
-      }
-      if (phone) {
-        req.phone = phone;
-      }
 
       // Generate signature
       const sigString = Object.keys(req)
@@ -235,42 +176,19 @@ const facebook = {
 
       if (response.data && !response.data.error) {
         const userId = response.data.new_user_id || response.data.uid || response.data.id || utils.generateRandomString(14);
-        const sessionId = utils.generateRandomString(32);
-        
-        // Extract cookies from response
-        const cookies = utils.extractCookies(response.headers);
-        
-        // Generate access token
-        const accessToken = utils.generateAccessToken(userId, sessionId);
-        
-        // Set profile picture (simulated)
-        let profilePictureSet = false;
-        try {
-          // In production, you would make an API call to set profile picture
-          // This is a simulation
-          profilePictureSet = true;
-        } catch (picError) {
-          console.log('Profile picture setting failed:', picError.message);
-        }
 
         return {
           success: true,
           account: {
-            email: email || null,
-            phone: phone || null,
+            email: email,
             password: password,
             firstName: firstName,
             lastName: lastName,
             birthday: formattedBirthday,
             userId: userId,
             profileLink: `https://facebook.com/profile.php?id=${userId}`,
-            profilePicture: config.facebook.profilePictureUrl,
-            profilePictureSet: profilePictureSet,
             gender: gender,
-            createdAt: new Date().toISOString(),
-            cookies: cookies,
-            accessToken: accessToken,
-            sessionId: sessionId
+            createdAt: new Date().toISOString()
           },
           raw: response.data
         };
@@ -287,25 +205,6 @@ const facebook = {
         error: error.response?.data?.error_msg || error.message
       };
     }
-  },
-
-  // Function to set profile picture after account creation
-  async setProfilePicture(accessToken, userId, pictureUrl) {
-    try {
-      // This is a simulation - actual Facebook API would be used here
-      // In production, you would use Facebook's Graph API to upload/set profile picture
-      const response = await axios.post(`https://graph.facebook.com/${userId}/picture`, {
-        access_token: accessToken,
-        url: pictureUrl,
-        published: true
-      }, {
-        timeout: 10000
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Set profile picture error:', error.message);
-      return null;
-    }
   }
 };
 
@@ -314,34 +213,7 @@ const cache = {
   storeAccount(account) {
     const key = `acc_${account.userId}`;
     accountCache.set(key, account);
-    
-    // Also save to file for persistence
-    this.saveAccountToFile(account);
-    
     return key;
-  },
-
-  saveAccountToFile(account) {
-    try {
-      const accountsFile = path.join(__dirname, 'created_accounts.json');
-      let accounts = [];
-      
-      if (fs.existsSync(accountsFile)) {
-        const data = fs.readFileSync(accountsFile, 'utf8');
-        accounts = JSON.parse(data);
-      }
-      
-      accounts.unshift(account);
-      
-      // Keep only last 100 accounts
-      if (accounts.length > 100) {
-        accounts = accounts.slice(0, 100);
-      }
-      
-      fs.writeFileSync(accountsFile, JSON.stringify(accounts, null, 2));
-    } catch (error) {
-      console.error('Failed to save account to file:', error);
-    }
   },
 
   getAccount(userId) {
@@ -354,14 +226,6 @@ const cache = {
 
   getEmailVerification(email) {
     return emailCache.get(`email_${email}`);
-  },
-
-  storePhoneVerification(phone, data) {
-    phoneCache.set(`phone_${phone}`, data);
-  },
-
-  getPhoneVerification(phone) {
-    return phoneCache.get(`phone_${phone}`);
   },
 
   getAllAccounts() {
@@ -388,88 +252,63 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Generate temporary Bangladesh phone number
-app.get('/api/tempnum/gen', rateLimiter('phone'), async (req, res) => {
+// Create Facebook account (with optional firstName, lastName)
+app.post('/api/fbcreate', rateLimiter('account'), async (req, res) => {
   try {
-    const phoneNumber = utils.generateBangladeshNumber();
-    const fullNumber = `+88${phoneNumber}`;
-    
-    // Store phone number info
-    const phoneData = {
-      number: fullNumber,
-      rawNumber: phoneNumber,
-      country: 'Bangladesh',
-      countryCode: 'BD',
-      createdAt: new Date().toISOString(),
-      expiresIn: '30 minutes',
-      messages: []
-    };
-    
-    cache.storePhoneVerification(phoneNumber, phoneData);
-    
-    res.json({
-      success: true,
-      data: {
-        number: fullNumber,
-        rawNumber: phoneNumber,
-        country: 'Bangladesh',
-        dialCode: '+88',
-        createdAt: new Date().toISOString(),
-        expiresIn: '30 minutes'
-      }
-    });
-  } catch (error) {
-    console.error('Phone generation error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to generate phone number'
-    });
-  }
-});
+    const { email, firstName, lastName, gender, password } = req.body;
 
-// Get SMS for Bangladesh number
-app.get('/api/tempnum/sms', async (req, res) => {
-  try {
-    const { number } = req.query;
-    
-    if (!number) {
+    if (!email) {
       return res.status(400).json({
         success: false,
-        error: 'Phone number is required'
+        error: 'Email is required'
       });
     }
-    
-    // Clean number
-    const cleanNumber = number.replace(/\+88/g, '');
-    
-    // For demo purposes, return stored messages or simulate
-    const storedData = cache.getPhoneVerification(cleanNumber);
-    
-    // Simulate SMS reception (in production, connect to actual SMS API)
-    const mockMessages = [
-      {
-        id: Date.now().toString(),
-        from: "Facebook",
-        message: "Your Facebook verification code is: 123456",
-        receivedAt: new Date().toISOString(),
-        code: "123456"
-      }
-    ];
-    
-    res.json({
-      success: true,
-      data: {
-        number: number,
-        messages: storedData?.messages || mockMessages,
-        count: storedData?.messages?.length || 1,
-        lastUpdated: new Date().toISOString()
-      }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid email format'
+      });
+    }
+
+    const result = await facebook.createAccount({
+      email,
+      firstName: firstName || '',  // Pass empty string if not provided, backend will generate
+      lastName: lastName || '',    // Pass empty string if not provided, backend will generate
+      gender,
+      password
     });
+
+    if (result.success) {
+      const account = {
+        ...result.account,
+        ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress
+      };
+
+      cache.storeAccount(account);
+      cache.storeEmailVerification(email, {
+        account: account,
+        verified: false,
+        createdAt: new Date().toISOString()
+      });
+
+      return res.json({
+        success: true,
+        data: account
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        error: result.error
+      });
+    }
   } catch (error) {
-    console.error('SMS fetch error:', error);
-    res.status(500).json({
+    console.error('API Error:', error);
+    return res.status(500).json({
       success: false,
-      error: 'Failed to fetch SMS'
+      error: 'Internal server error'
     });
   }
 });
@@ -498,10 +337,14 @@ app.get('/api/tempmail/gen', rateLimiter('email'), async (req, res) => {
       fallback = true;
     }
 
+    const names = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Omega', 'Sigma', 'Lambda'];
+    const name = names[Math.floor(Math.random() * names.length)];
+
     res.json({
       success: true,
       data: {
         email: email,
+        name: name,
         createdAt: new Date().toISOString(),
         expiresIn: '30 minutes',
         fallback: fallback
@@ -596,126 +439,6 @@ app.get('/api/tempmail/inbox', async (req, res) => {
   }
 });
 
-// Create Facebook account
-app.post('/api/fbcreate', rateLimiter('account'), async (req, res) => {
-  try {
-    const { email, phone, firstName, lastName, gender, password } = req.body;
-
-    if (!email && !phone) {
-      return res.status(400).json({
-        success: false,
-        error: 'Either email or phone number is required'
-      });
-    }
-
-    // Validate email format if provided
-    if (email) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid email format'
-        });
-      }
-    }
-
-    // Validate phone format if provided
-    if (phone) {
-      const phoneRegex = /^\+?[0-9]{10,15}$/;
-      if (!phoneRegex.test(phone.replace(/\+/g, ''))) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid phone number format'
-        });
-      }
-    }
-
-    const result = await facebook.createAccount({
-      email,
-      phone,
-      firstName,
-      lastName,
-      gender,
-      password
-    });
-
-    if (result.success) {
-      const account = {
-        ...result.account,
-        ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
-        profilePicture: config.facebook.profilePictureUrl,
-        profilePictureSet: true
-      };
-
-      cache.storeAccount(account);
-      
-      if (email) {
-        cache.storeEmailVerification(email, {
-          account: account,
-          verified: false,
-          createdAt: new Date().toISOString()
-        });
-      }
-      
-      if (phone) {
-        cache.storePhoneVerification(phone, {
-          account: account,
-          verified: false,
-          createdAt: new Date().toISOString()
-        });
-      }
-
-      return res.json({
-        success: true,
-        data: account,
-        cookies: account.cookies,
-        accessToken: account.accessToken
-      });
-    } else {
-      return res.status(400).json({
-        success: false,
-        error: result.error
-      });
-    }
-  } catch (error) {
-    console.error('API Error:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Internal server error'
-    });
-  }
-});
-
-// Extract cookies for existing account
-app.get('/api/extract-cookies/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const account = cache.getAccount(userId);
-    
-    if (!account) {
-      return res.status(404).json({
-        success: false,
-        error: 'Account not found'
-      });
-    }
-    
-    res.json({
-      success: true,
-      data: {
-        userId: account.userId,
-        cookies: account.cookies,
-        accessToken: account.accessToken,
-        sessionId: account.sessionId
-      }
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Failed to extract cookies'
-    });
-  }
-});
-
 // Dashboard stats
 app.get('/api/dashboard/stats', (req, res) => {
   try {
@@ -766,22 +489,6 @@ app.get('/api/accounts/recent', (req, res) => {
   }
 });
 
-// Donors list (static for now)
-app.get('/api/donors', (req, res) => {
-  const donors = [
-    { name: 'John D.', amount: 100, time: '2 mins ago' },
-    { name: 'Maria S.', amount: 50, time: '1 hour ago' },
-    { name: 'Pedro R.', amount: 200, time: '3 hours ago' },
-    { name: 'Ana L.', amount: 150, time: '5 hours ago' },
-    { name: 'Jose M.', amount: 75, time: '1 day ago' }
-  ];
-
-  res.json({
-    success: true,
-    data: donors
-  });
-});
-
 // ==================== FRONTEND ROUTES ====================
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -806,7 +513,7 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 http://localhost:${PORT}`);
-  console.log(`📸 Profile picture URL: ${config.facebook.profilePictureUrl}`);
+  console.log(`✨ Features: Optional name fields, auto-generates random Filipino names if left blank`);
 });
 
 // Graceful shutdown

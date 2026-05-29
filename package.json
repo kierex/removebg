@@ -1,26 +1,65 @@
 {
   "name": "facebook-account-creator-api",
-  "version": "1.0.0",
-  "description": "Facebook account creation API with anti-detection measures",
+  "version": "2.0.0",
+  "description": "Stable Facebook Account Creator API with API Key Authentication, Rate Limiting, and SQLite Database",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "setup": "node setup.js",
+    "test": "node test.js",
+    "backup": "node backup.js",
+    "clean": "rm -rf node_modules package-lock.json && npm install"
   },
   "keywords": [
     "facebook",
     "account-creator",
     "api",
-    "automation"
+    "authentication",
+    "rate-limiting",
+    "sqlite",
+    "encryption",
+    "facebook-api",
+    "account-generator",
+    "facebook-account"
   ],
-  "author": "",
+  "author": "API Developer",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/facebook-account-creator-api"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/facebook-account-creator-api/issues"
+  },
+  "homepage": "https://github.com/yourusername/facebook-account-creator-api#readme",
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
   "dependencies": {
     "express": "^4.18.2",
     "axios": "^1.6.0",
-    "express-rate-limit": "^7.1.5"
+    "better-sqlite3": "^9.0.0",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "node-cache": "^5.1.2",
+    "uuid": "^9.0.1",
+    "bcrypt": "^5.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "dotenv": "^16.3.1",
+    "compression": "^1.7.4",
+    "morgan": "^1.10.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "eslint": "^8.53.0",
+    "prettier": "^3.0.3"
+  },
+  "optionalDependencies": {
+    "pm2": "^5.3.0"
   }
 }

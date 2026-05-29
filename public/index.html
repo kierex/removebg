@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Facebook Account Creator API - Testing Interface</title>
+    <title>Facebook Account Creator - Multi-Key API System</title>
     <style>
         * {
             margin: 0;
@@ -19,11 +19,10 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
         }
 
-        /* Header */
         .header {
             text-align: center;
             color: white;
@@ -50,15 +49,13 @@
             background: rgba(255,255,255,0.2);
         }
 
-        /* Grid Layout */
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
             gap: 20px;
             margin-bottom: 20px;
         }
 
-        /* Cards */
         .card {
             background: white;
             border-radius: 15px;
@@ -90,7 +87,6 @@
             font-size: 1.5rem;
         }
 
-        /* Form Elements */
         .form-group {
             margin-bottom: 15px;
         }
@@ -102,7 +98,7 @@
             font-weight: 500;
         }
 
-        input, select {
+        input, select, textarea {
             width: 100%;
             padding: 10px;
             border: 2px solid #e0e0e0;
@@ -111,7 +107,7 @@
             transition: border-color 0.3s;
         }
 
-        input:focus, select:focus {
+        input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: #667eea;
         }
@@ -143,7 +139,10 @@
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         }
 
-        /* Result Box */
+        button.success {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+        }
+
         .result-box {
             background: #f8f9fa;
             border-radius: 8px;
@@ -169,10 +168,9 @@
             border-left: 4px solid #f44336;
         }
 
-        /* Stats Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
         }
@@ -197,32 +195,60 @@
             color: #667eea;
         }
 
-        /* API Keys Status */
-        .keys-status {
-            display: flex;
+        .keys-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 10px;
-            flex-wrap: wrap;
             margin-top: 10px;
         }
 
-        .key-badge {
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
+        .key-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
+            border-left: 3px solid #4caf50;
         }
 
-        .key-active {
+        .key-card.failed {
+            border-left-color: #f44336;
+            opacity: 0.6;
+        }
+
+        .key-name {
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .key-reliability {
+            font-size: 11px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .key-region {
+            font-size: 10px;
+            color: #999;
+            margin-top: 3px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-active {
             background: #4caf50;
-            color: white;
         }
 
-        .key-failed {
+        .status-failed {
             background: #f44336;
-            color: white;
         }
 
-        /* Loading Spinner */
         .spinner {
             display: inline-block;
             width: 20px;
@@ -237,7 +263,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Toast Notification */
         .toast {
             position: fixed;
             bottom: 20px;
@@ -261,7 +286,6 @@
             }
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .grid {
                 grid-template-columns: 1fr;
@@ -276,7 +300,6 @@
             }
         }
 
-        /* Scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -299,14 +322,12 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <div class="header">
             <h1>🚀 Facebook Account Creator API</h1>
-            <p>Professional Account Creation with Auto Key Rotation | Testing Interface</p>
+            <p>Multi-Key System with Auto-Rotation | 10+ Premium API Keys</p>
             <div class="status-badge" id="apiStatus">🟢 Checking API Status...</div>
         </div>
 
-        <!-- Stats Dashboard -->
         <div class="stats-grid" id="statsGrid">
             <div class="stat-card">
                 <h3>Total Accounts</h3>
@@ -324,9 +345,12 @@
                 <h3>API Keys Available</h3>
                 <div class="value" id="availableKeys">0</div>
             </div>
+            <div class="stat-card">
+                <h3>Total Keys</h3>
+                <div class="value" id="totalKeys">0</div>
+            </div>
         </div>
 
-        <!-- Main Grid -->
         <div class="grid">
             <!-- Create Account Card -->
             <div class="card">
@@ -338,6 +362,12 @@
                     <div class="form-group">
                         <label>Email Address *</label>
                         <input type="email" id="accountEmail" placeholder="Enter email address" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Select API Key (Optional - Leave empty for auto)</label>
+                        <select id="apiKeySelect">
+                            <option value="">🤖 Auto-Select Best Key</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label>First Name (Optional)</label>
@@ -362,6 +392,17 @@
                     <button type="submit" id="createBtn">🎯 Create Account</button>
                 </form>
                 <div id="createResult" class="result-box" style="display: none;"></div>
+            </div>
+
+            <!-- API Keys Management Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>🔑 API Keys Management</h2>
+                    <span class="icon">🔐</span>
+                </div>
+                <button onclick="loadApiKeys()" id="loadKeysBtn">🔄 Load All API Keys</button>
+                <button onclick="resetFailedKeys()" class="secondary" style="margin-top: 10px;">🔄 Reset Failed Keys</button>
+                <div id="keysResult" class="result-box" style="display: none; max-height: 500px;"></div>
             </div>
 
             <!-- Generate Temp Email Card -->
@@ -398,18 +439,7 @@
                 <div id="recentAccountsResult" class="result-box" style="display: none;"></div>
             </div>
 
-            <!-- API Keys Status Card -->
-            <div class="card">
-                <div class="card-header">
-                    <h2>🔑 API Keys Status</h2>
-                    <span class="icon">🔐</span>
-                </div>
-                <button onclick="loadApiKeysStatus()" id="keysStatusBtn">🔍 Check Keys Status</button>
-                <button onclick="resetFailedKeys()" class="secondary" style="margin-top: 10px;">🔄 Reset Failed Keys</button>
-                <div id="keysStatusResult" class="result-box" style="display: none;"></div>
-            </div>
-
-            <!-- Donors Card -->
+            <!-- Supporters Card -->
             <div class="card">
                 <div class="card-header">
                     <h2>❤️ Supporters</h2>
@@ -423,8 +453,8 @@
 
     <script>
         const API_BASE = '/api';
-        
-        // Helper function to show toast notification
+        let allApiKeys = [];
+
         function showToast(message, isError = false) {
             const toast = document.createElement('div');
             toast.className = 'toast';
@@ -434,12 +464,10 @@
             setTimeout(() => toast.remove(), 3000);
         }
 
-        // Helper function to format JSON nicely
         function formatJSON(data) {
             return JSON.stringify(data, null, 2);
         }
 
-        // Helper function to show result
         function showResult(elementId, data, isError = false) {
             const element = document.getElementById(elementId);
             element.style.display = 'block';
@@ -447,7 +475,6 @@
             element.innerHTML = `<pre>${formatJSON(data)}</pre>`;
         }
 
-        // Load dashboard stats
         async function loadStats() {
             try {
                 const response = await fetch(`${API_BASE}/dashboard/stats`);
@@ -457,20 +484,20 @@
                     document.getElementById('lastHour').textContent = result.data.lastHour;
                     document.getElementById('lastDay').textContent = result.data.lastDay;
                     document.getElementById('availableKeys').textContent = result.data.apiKeys.available;
+                    document.getElementById('totalKeys').textContent = result.data.apiKeys.total;
                 }
             } catch (error) {
                 console.error('Failed to load stats:', error);
             }
         }
 
-        // Check API health
         async function checkApiHealth() {
             try {
                 const response = await fetch(`${API_BASE}/health`);
                 const result = await response.json();
                 const statusElement = document.getElementById('apiStatus');
                 if (result.success && result.status === 'online') {
-                    statusElement.innerHTML = '🟢 API Online';
+                    statusElement.innerHTML = `🟢 API Online | ${result.apiKeys.available}/${result.apiKeys.total} Keys Available`;
                     statusElement.style.background = 'rgba(76, 175, 80, 0.3)';
                 } else {
                     statusElement.innerHTML = '🔴 API Offline';
@@ -482,13 +509,75 @@
             }
         }
 
-        // Create Facebook Account
+        async function loadApiKeys() {
+            const keysBtn = document.getElementById('loadKeysBtn');
+            const originalText = keysBtn.innerHTML;
+            
+            keysBtn.innerHTML = '<div class="spinner"></div> Loading Keys...';
+            keysBtn.disabled = true;
+            
+            try {
+                const response = await fetch(`${API_BASE}/keys/list`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    allApiKeys = result.data.all;
+                    
+                    // Update select dropdown
+                    const select = document.getElementById('apiKeySelect');
+                    select.innerHTML = '<option value="">🤖 Auto-Select Best Key</option>';
+                    
+                    result.data.available.forEach(key => {
+                        const option = document.createElement('option');
+                        option.value = key.id;
+                        option.textContent = `🔑 ${key.name} (${key.reliability}% reliable) - ${key.region}`;
+                        select.appendChild(option);
+                    });
+                    
+                    // Display keys in a grid
+                    const keysHtml = `
+                        <div class="keys-grid">
+                            ${result.data.all.map(key => `
+                                <div class="key-card ${key.status === 'failed' ? 'failed' : ''}">
+                                    <div class="key-name">
+                                        <span>${key.name}</span>
+                                        <span class="status-dot ${key.status === 'active' ? 'status-active' : 'status-failed'}"></span>
+                                    </div>
+                                    <div class="key-reliability">⭐ Reliability: ${key.reliability}%</div>
+                                    <div class="key-region">🌍 Region: ${key.region}</div>
+                                    <div class="key-region">📊 Status: ${key.status.toUpperCase()}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 8px;">
+                            <strong>📊 Key Statistics:</strong><br>
+                            ${Object.entries(result.data.stats).map(([key, stats]) => `
+                                ${key.toUpperCase()}: ${stats.success}/${stats.total} success (${stats.total > 0 ? Math.round((stats.success/stats.total)*100) : 0}%)
+                            `).join('<br>')}
+                        </div>
+                    `;
+                    
+                    document.getElementById('keysResult').innerHTML = keysHtml;
+                    document.getElementById('keysResult').style.display = 'block';
+                    document.getElementById('keysResult').className = 'result-box success';
+                    
+                    showToast(`✅ Loaded ${result.data.availableCount}/${result.data.totalCount} available keys`);
+                }
+            } catch (error) {
+                showResult('keysResult', { error: error.message }, true);
+                showToast('❌ Failed to load keys', true);
+            } finally {
+                keysBtn.innerHTML = originalText;
+                keysBtn.disabled = false;
+            }
+        }
+
         document.getElementById('createAccountForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const createBtn = document.getElementById('createBtn');
             const originalText = createBtn.innerHTML;
             
-            createBtn.innerHTML = '<div class="spinner"></div> Creating...';
+            createBtn.innerHTML = '<div class="spinner"></div> Creating Account...';
             createBtn.disabled = true;
             
             try {
@@ -497,12 +586,14 @@
                 const lastName = document.getElementById('lastName').value;
                 const gender = document.getElementById('gender').value;
                 const password = document.getElementById('password').value;
+                const apiKey = document.getElementById('apiKeySelect').value;
                 
                 const requestBody = { email };
                 if (firstName) requestBody.firstName = firstName;
                 if (lastName) requestBody.lastName = lastName;
                 if (gender) requestBody.gender = gender;
                 if (password) requestBody.password = password;
+                if (apiKey) requestBody.apiKey = apiKey;
                 
                 const response = await fetch(`${API_BASE}/fbcreate`, {
                     method: 'POST',
@@ -514,9 +605,8 @@
                 showResult('createResult', result, !result.success);
                 
                 if (result.success) {
-                    showToast('✅ Account created successfully!');
+                    showToast(`✅ Account created using ${result.apiKeyUsed} key!`);
                     loadStats();
-                    // Auto-fill the inbox email field with the created email
                     document.getElementById('inboxEmail').value = email;
                 } else {
                     showToast(`❌ ${result.error}`, true);
@@ -530,7 +620,6 @@
             }
         });
         
-        // Generate Temporary Email
         async function generateTempEmail() {
             const genBtn = document.getElementById('genEmailBtn');
             const originalText = genBtn.innerHTML;
@@ -545,7 +634,6 @@
                 
                 if (result.success) {
                     showToast(`📧 Email generated: ${result.data.email}`);
-                    // Auto-fill the account email and inbox email fields
                     document.getElementById('accountEmail').value = result.data.email;
                     document.getElementById('inboxEmail').value = result.data.email;
                 }
@@ -558,7 +646,6 @@
             }
         }
         
-        // Check Inbox
         async function checkInbox() {
             const email = document.getElementById('inboxEmail').value;
             if (!email) {
@@ -591,7 +678,6 @@
             }
         }
         
-        // Load Recent Accounts
         async function loadRecentAccounts() {
             const recentBtn = document.getElementById('recentAccountsBtn');
             const originalText = recentBtn.innerHTML;
@@ -616,41 +702,6 @@
             }
         }
         
-        // Load API Keys Status
-        async function loadApiKeysStatus() {
-            const keysBtn = document.getElementById('keysStatusBtn');
-            const originalText = keysBtn.innerHTML;
-            
-            keysBtn.innerHTML = '<div class="spinner"></div> Loading...';
-            keysBtn.disabled = true;
-            
-            try {
-                const response = await fetch(`${API_BASE}/keys/status`);
-                const result = await response.json();
-                showResult('keysStatusResult', result, !result.success);
-                
-                if (result.success) {
-                    const statusHtml = `
-                        <div class="keys-status">
-                            ${result.data.available.map(k => `<span class="key-badge key-active">✅ ${k.name}</span>`).join('')}
-                            ${result.data.failed.map(k => `<span class="key-badge key-failed">❌ ${k.name}</span>`).join('')}
-                        </div>
-                        <p style="margin-top: 10px;">Available: ${result.data.availableCount}/4</p>
-                    `;
-                    document.getElementById('keysStatusResult').innerHTML = statusHtml;
-                    document.getElementById('keysStatusResult').style.display = 'block';
-                    document.getElementById('keysStatusResult').className = 'result-box success';
-                }
-            } catch (error) {
-                showResult('keysStatusResult', { error: error.message }, true);
-                showToast('❌ Failed to load keys status', true);
-            } finally {
-                keysBtn.innerHTML = originalText;
-                keysBtn.disabled = false;
-            }
-        }
-        
-        // Reset Failed Keys
         async function resetFailedKeys() {
             if (!confirm('Are you sure you want to reset all failed API keys?')) return;
             
@@ -662,7 +713,7 @@
                 
                 if (result.success) {
                     showToast('✅ All API keys have been reset');
-                    loadApiKeysStatus();
+                    loadApiKeys();
                     loadStats();
                     checkApiHealth();
                 } else {
@@ -673,7 +724,6 @@
             }
         }
         
-        // Load Donors
         async function loadDonors() {
             try {
                 const response = await fetch(`${API_BASE}/donors`);
@@ -684,23 +734,14 @@
             }
         }
         
-        // Auto-refresh stats every 30 seconds
         setInterval(() => {
             loadStats();
             checkApiHealth();
         }, 30000);
         
-        // Initial load
         loadStats();
         checkApiHealth();
-        loadApiKeysStatus();
-        
-        // Support Enter key to create account
-        document.getElementById('accountEmail').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                document.getElementById('createBtn').click();
-            }
-        });
+        loadApiKeys();
     </script>
 </body>
 </html>

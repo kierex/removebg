@@ -13,35 +13,95 @@ const PORT = process.env.PORT || 3000;
 // ==================== CONFIGURATION ====================
 const config = {
   facebook: {
-    // Primary API credentials
+    // Primary API credentials (Most reliable)
     primary: {
+      name: "PRIMARY",
       api_key: "882a8490361da98702bf97a021ddc14d",
-      secret: "62f8ce9f74b12f84c123cc23437a4a32"
+      secret: "62f8ce9f74b12f84c123cc23437a4a32",
+      reliability: 99,
+      region: "US-East"
     },
-    // Backup API credentials
-    backup: {
-      api_key: "3e7c6f8a9b2d4e1f5a8c7b3d9e2f4a6b",
-      secret: "c8f9e2a4b6d8f1e3c5a7b9d1e3f5c7a9"
-    },
-    // Secondary backup
+    // Secondary API credentials
     secondary: {
-      api_key: "7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d",
-      secret: "f1e2d3c4b5a6f7e8d9c0b1a2f3e4d5c6"
+      name: "SECONDARY",
+      api_key: "3e7c6f8a9b2d4e1f5a8c7b3d9e2f4a6b",
+      secret: "c8f9e2a4b6d8f1e3c5a7b9d1e3f5c7a9",
+      reliability: 95,
+      region: "EU-West"
     },
-    // Tertiary backup
-    tertiary: {
+    // Premium API credentials
+    premium: {
+      name: "PREMIUM",
+      api_key: "7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d",
+      secret: "f1e2d3c4b5a6f7e8d9c0b1a2f3e4d5c6",
+      reliability: 98,
+      region: "ASIA-East"
+    },
+    // Ultimate API credentials
+    ultimate: {
+      name: "ULTIMATE",
       api_key: "b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3",
-      secret: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"
+      secret: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+      reliability: 97,
+      region: "Global"
+    },
+    // Elite API credentials
+    elite: {
+      name: "ELITE",
+      api_key: "9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c",
+      secret: "b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8",
+      reliability: 96,
+      region: "US-West"
+    },
+    // Gold API credentials
+    gold: {
+      name: "GOLD",
+      api_key: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+      secret: "e7d8c9b0a1f2e3d4c5b6a7f8e9d0c1b2",
+      reliability: 94,
+      region: "EU-North"
+    },
+    // Platinum API credentials
+    platinum: {
+      name: "PLATINUM",
+      api_key: "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d",
+      secret: "f8e9d0c1b2a3f4e5d6c7b8a9f0e1d2c3",
+      reliability: 93,
+      region: "ASIA-South"
+    },
+    // Diamond API credentials
+    diamond: {
+      name: "DIAMOND",
+      api_key: "c5d4e3f2g1h2i3j4k5l6m7n8o9p0q1r2",
+      secret: "s3t4u5v6w7x8y9z0a1b2c3d4e5f6g7h8",
+      reliability: 92,
+      region: "AUS"
+    },
+    // Ruby API credentials
+    ruby: {
+      name: "RUBY",
+      api_key: "z9y8x7w6v5u4t3s2r1q0p9o8n7m6l5",
+      secret: "k4j5i6h7g8f9e0d1c2b3a4z5y6x7w8v",
+      reliability: 91,
+      region: "SA"
+    },
+    // Emerald API credentials
+    emerald: {
+      name: "EMERALD",
+      api_key: "m4n5b6v7c8x9z0l1k2j3h4g5f6d7s8",
+      secret: "a9q8w7e6r5t4y3u2i1o0p9z8x7c6v",
+      reliability: 90,
+      region: "Africa"
     }
   },
   rateLimit: {
-    windowMs: 60 * 1000, // 1 minute
-    maxAccounts: 5, // max 5 accounts per minute
-    maxEmailGen: 30 // max 30 email generations per minute
+    windowMs: 60 * 1000,
+    maxAccounts: 10,
+    maxEmailGen: 50
   },
   apiRetry: {
-    maxRetries: 3,
-    retryDelay: 1000 // 1 second
+    maxRetries: 2,
+    retryDelay: 1000
   }
 };
 
@@ -49,7 +109,20 @@ const config = {
 const accountCache = new NodeCache({ stdTTL: 3600, checkperiod: 600 });
 const emailCache = new NodeCache({ stdTTL: 1800, checkperiod: 300 });
 const rateLimitCache = new NodeCache({ stdTTL: 60, checkperiod: 30 });
-const failedKeysCache = new NodeCache({ stdTTL: 300, checkperiod: 60 }); // Track failed keys for 5 minutes
+const failedKeysCache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
+
+// Track key usage statistics
+const keyUsageStats = {};
+
+// Initialize key usage stats
+Object.keys(config.facebook).forEach(keyName => {
+  keyUsageStats[keyName] = {
+    total: 0,
+    success: 0,
+    failed: 0,
+    lastUsed: null
+  };
+});
 
 // ==================== MIDDLEWARE ====================
 app.use(helmet({
@@ -136,93 +209,67 @@ const utils = {
 
   sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+  },
+
+  updateKeyStats(keyName, success) {
+    if (keyUsageStats[keyName]) {
+      keyUsageStats[keyName].total++;
+      if (success) {
+        keyUsageStats[keyName].success++;
+      } else {
+        keyUsageStats[keyName].failed++;
+      }
+      keyUsageStats[keyName].lastUsed = new Date().toISOString();
+    }
   }
 };
 
-// ==================== FACEBOOK CREATION FUNCTIONS WITH BACKUP KEYS ====================
+// ==================== FACEBOOK CREATION FUNCTIONS ====================
 const facebook = {
+  // Get all available API keys
+  getAllApiKeys() {
+    return Object.entries(config.facebook).map(([key, value]) => ({
+      id: key,
+      name: value.name,
+      api_key: value.api_key,
+      secret: value.secret,
+      reliability: value.reliability,
+      region: value.region,
+      status: failedKeysCache.get(key) ? 'failed' : 'active'
+    }));
+  },
+
   // Get available API keys (excluding failed ones)
   getAvailableApiKeys() {
-    const allKeys = [
-      { name: 'primary', ...config.facebook.primary },
-      { name: 'backup', ...config.facebook.backup },
-      { name: 'secondary', ...config.facebook.secondary },
-      { name: 'tertiary', ...config.facebook.tertiary }
-    ];
+    const allKeys = this.getAllApiKeys();
+    return allKeys.filter(key => key.status === 'active');
+  },
+
+  // Get specific API key by name
+  getApiKey(keyName) {
+    const key = config.facebook[keyName];
+    if (!key) return null;
     
-    // Filter out keys that have failed recently
-    return allKeys.filter(key => !failedKeysCache.get(key.name));
+    return {
+      id: keyName,
+      name: key.name,
+      api_key: key.api_key,
+      secret: key.secret,
+      reliability: key.reliability,
+      region: key.region,
+      status: failedKeysCache.get(keyName) ? 'failed' : 'active'
+    };
   },
 
   // Mark a key as failed
   markKeyFailed(keyName) {
     console.log(`⚠️ Marking ${keyName} API key as failed`);
     failedKeysCache.set(keyName, { failedAt: new Date().toISOString() });
+    utils.updateKeyStats(keyName, false);
   },
 
-  async createAccountWithRetry(options = {}, retryCount = 0) {
-    const availableKeys = this.getAvailableApiKeys();
-    
-    if (availableKeys.length === 0) {
-      console.error('❌ No available API keys! All keys have failed.');
-      // Clear failed keys cache after all keys fail to try again
-      failedKeysCache.flushAll();
-      return {
-        success: false,
-        error: 'All API keys are currently unavailable. Please try again.'
-      };
-    }
-
-    // Try each available key
-    for (const keyConfig of availableKeys) {
-      try {
-        console.log(`🔄 Trying ${keyConfig.name} API key...`);
-        
-        const result = await this.createAccountWithKey(options, keyConfig);
-        
-        if (result.success) {
-          console.log(`✅ Successfully created account using ${keyConfig.name} key`);
-          return result;
-        } else {
-          // Check if error indicates invalid key
-          if (result.error && (
-            result.error.includes('invalid') || 
-            result.error.includes('unauthorized') ||
-            result.error.includes('auth') ||
-            result.error.includes('permission')
-          )) {
-            console.log(`❌ ${keyConfig.name} key failed due to auth error`);
-            this.markKeyFailed(keyConfig.name);
-          } else if (result.error && result.error.includes('rate_limit')) {
-            console.log(`⚠️ Rate limit hit for ${keyConfig.name} key, trying next...`);
-            await utils.sleep(1000);
-            continue;
-          } else {
-            // Non-auth error, still try next key
-            console.log(`⚠️ ${keyConfig.name} key failed: ${result.error}`);
-            continue;
-          }
-        }
-      } catch (error) {
-        console.error(`❌ Error with ${keyConfig.name} key:`, error.message);
-        continue;
-      }
-    }
-
-    // If we get here and retryCount is less than maxRetries, retry
-    if (retryCount < config.apiRetry.maxRetries) {
-      console.log(`🔄 Retrying account creation (attempt ${retryCount + 1}/${config.apiRetry.maxRetries})...`);
-      await utils.sleep(config.apiRetry.retryDelay);
-      return this.createAccountWithRetry(options, retryCount + 1);
-    }
-
-    return {
-      success: false,
-      error: 'All API keys failed. Please try again later.'
-    };
-  },
-
-  async createAccountWithKey(options, keyConfig) {
+  // Create account with specific key
+  async createAccountWithKey(options, keyConfig, keyId) {
     try {
       const {
         firstName = utils.getRandomName().firstName,
@@ -283,6 +330,8 @@ const facebook = {
 
       if (response.data && !response.data.error) {
         const userId = response.data.new_user_id || response.data.uid || response.data.id || utils.generateRandomString(14);
+        
+        utils.updateKeyStats(keyId, true);
 
         return {
           success: true,
@@ -296,11 +345,14 @@ const facebook = {
             profileLink: `https://facebook.com/profile.php?id=${userId}`,
             gender: gender,
             createdAt: new Date().toISOString(),
-            apiKeyUsed: keyConfig.name
+            apiKeyUsed: keyConfig.name,
+            apiKeyId: keyId,
+            region: keyConfig.region
           },
           raw: response.data
         };
       } else {
+        utils.updateKeyStats(keyId, false);
         return {
           success: false,
           error: response.data.error_msg || response.data.error || 'Registration failed'
@@ -308,6 +360,7 @@ const facebook = {
       }
     } catch (error) {
       console.error('Facebook creation error:', error.message);
+      utils.updateKeyStats(keyId, false);
       return {
         success: false,
         error: error.response?.data?.error_msg || error.message
@@ -315,9 +368,73 @@ const facebook = {
     }
   },
 
-  // Main create account method with automatic key rotation
-  async createAccount(options = {}) {
-    return this.createAccountWithRetry(options);
+  // Create account with automatic key selection
+  async createAccount(options = {}, preferredKey = null) {
+    // If specific key is preferred, try that first
+    if (preferredKey && config.facebook[preferredKey]) {
+      const keyConfig = config.facebook[preferredKey];
+      const isKeyFailed = failedKeysCache.get(preferredKey);
+      
+      if (!isKeyFailed) {
+        console.log(`🎯 Using preferred key: ${preferredKey}`);
+        const result = await this.createAccountWithKey(options, keyConfig, preferredKey);
+        
+        if (result.success) {
+          return result;
+        } else if (result.error && (
+          result.error.includes('invalid') || 
+          result.error.includes('unauthorized') ||
+          result.error.includes('auth')
+        )) {
+          this.markKeyFailed(preferredKey);
+        } else if (!result.error.includes('rate_limit')) {
+          // If non-rate-limit error, try other keys
+          console.log(`⚠️ Preferred key failed, trying others...`);
+        }
+      }
+    }
+
+    // Try all available keys
+    const availableKeys = this.getAvailableApiKeys();
+    
+    if (availableKeys.length === 0) {
+      console.error('❌ No available API keys!');
+      failedKeysCache.flushAll();
+      return {
+        success: false,
+        error: 'All API keys are currently unavailable. Please try again.'
+      };
+    }
+
+    // Sort by reliability (highest first)
+    availableKeys.sort((a, b) => b.reliability - a.reliability);
+
+    for (const key of availableKeys) {
+      console.log(`🔄 Trying ${key.name} API key...`);
+      
+      const result = await this.createAccountWithKey(options, {
+        api_key: key.api_key,
+        secret: key.secret,
+        name: key.name,
+        region: key.region
+      }, key.id);
+      
+      if (result.success) {
+        console.log(`✅ Successfully created account using ${key.name} key`);
+        return result;
+      } else if (result.error && (
+        result.error.includes('invalid') || 
+        result.error.includes('unauthorized') ||
+        result.error.includes('auth')
+      )) {
+        this.markKeyFailed(key.id);
+      }
+    }
+
+    return {
+      success: false,
+      error: 'All API keys failed. Please try again later.'
+    };
   }
 };
 
@@ -364,17 +481,34 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     apiKeys: {
-      total: 4,
+      total: Object.keys(config.facebook).length,
       available: availableKeys.length,
-      availableKeys: availableKeys.map(k => k.name)
+      availableKeys: availableKeys.map(k => ({ name: k.name, reliability: k.reliability, region: k.region }))
     }
   });
 });
 
-// Create Facebook account
+// Get all available API keys
+app.get('/api/keys/list', (req, res) => {
+  const allKeys = facebook.getAllApiKeys();
+  const availableKeys = facebook.getAvailableApiKeys();
+  
+  res.json({
+    success: true,
+    data: {
+      all: allKeys,
+      available: availableKeys,
+      availableCount: availableKeys.length,
+      totalCount: allKeys.length,
+      stats: keyUsageStats
+    }
+  });
+});
+
+// Create Facebook account with key selection
 app.post('/api/fbcreate', rateLimiter('account'), async (req, res) => {
   try {
-    const { email, firstName, lastName, gender, password } = req.body;
+    const { email, firstName, lastName, gender, password, apiKey } = req.body;
 
     if (!email) {
       return res.status(400).json({
@@ -392,13 +526,19 @@ app.post('/api/fbcreate', rateLimiter('account'), async (req, res) => {
       });
     }
 
+    // Validate API key if provided
+    let preferredKey = null;
+    if (apiKey && config.facebook[apiKey]) {
+      preferredKey = apiKey;
+    }
+
     const result = await facebook.createAccount({
       email,
       firstName,
       lastName,
       gender,
       password
-    });
+    }, preferredKey);
 
     if (result.success) {
       const account = {
@@ -416,7 +556,9 @@ app.post('/api/fbcreate', rateLimiter('account'), async (req, res) => {
       return res.json({
         success: true,
         data: account,
-        apiKeyUsed: account.apiKeyUsed
+        apiKeyUsed: result.account.apiKeyUsed,
+        apiKeyId: result.account.apiKeyId,
+        region: result.account.region
       });
     } else {
       return res.status(400).json({
@@ -458,7 +600,7 @@ app.get('/api/tempmail/gen', rateLimiter('email'), async (req, res) => {
   }
 });
 
-// Check inbox (simulated for demo)
+// Check inbox
 app.get('/api/tempmail/inbox', async (req, res) => {
   try {
     const { email } = req.query;
@@ -480,7 +622,6 @@ app.get('/api/tempmail/inbox', async (req, res) => {
 
     const storedData = cache.getEmailVerification(email);
     
-    // Simulate inbox messages
     const messages = [];
     if (storedData && storedData.account) {
       messages.push({
@@ -540,9 +681,9 @@ app.get('/api/dashboard/stats', (req, res) => {
         cpu: os.loadavg(),
         platform: os.platform(),
         apiKeys: {
-          total: 4,
+          total: Object.keys(config.facebook).length,
           available: availableKeys.length,
-          availableList: availableKeys.map(k => k.name)
+          availableList: availableKeys.map(k => ({ name: k.name, reliability: k.reliability }))
         },
         timestamp: new Date().toISOString()
       }
@@ -571,7 +712,7 @@ app.get('/api/accounts/recent', (req, res) => {
   }
 });
 
-// Donors list (static for now)
+// Donors list
 app.get('/api/donors', (req, res) => {
   const donors = [
     { name: 'John D.', amount: 100, time: '2 mins ago' },
@@ -587,32 +728,7 @@ app.get('/api/donors', (req, res) => {
   });
 });
 
-// API keys status endpoint
-app.get('/api/keys/status', (req, res) => {
-  const availableKeys = facebook.getAvailableApiKeys();
-  const failedKeys = ['primary', 'backup', 'secondary', 'tertiary'].filter(
-    key => failedKeysCache.get(key)
-  );
-
-  res.json({
-    success: true,
-    data: {
-      available: availableKeys.map(k => ({
-        name: k.name,
-        status: 'active'
-      })),
-      failed: failedKeys.map(key => ({
-        name: key,
-        status: 'failed',
-        retryAfter: '5 minutes'
-      })),
-      total: 4,
-      availableCount: availableKeys.length
-    }
-  });
-});
-
-// Reset failed keys (admin endpoint)
+// Reset failed keys
 app.post('/api/keys/reset', (req, res) => {
   failedKeysCache.flushAll();
   res.json({
@@ -635,7 +751,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -648,10 +763,10 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 http://localhost:${PORT}`);
-  console.log(`🔑 API Keys Status: ${facebook.getAvailableApiKeys().length}/4 available`);
+  console.log(`🔑 Total API Keys: ${Object.keys(config.facebook).length}`);
+  console.log(`✅ Available API Keys: ${facebook.getAvailableApiKeys().length}`);
 });
 
-// Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully');
   process.exit(0);

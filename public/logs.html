@@ -1,3 +1,4 @@
+<!-- logs.html - ALL STATS HERE (Total Shares, Active Sessions, Completed) + session logs -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,623 +14,243 @@
             background: radial-gradient(circle at 10% 20%, rgb(0, 0, 0) 0%, #0a0a1a 100%);
             min-height: 100vh;
             padding: 40px 24px;
+            position: relative;
         }
-        .wrapper-container { max-width: 1300px; margin: 0 auto; }
+        body::before {
+            content: "";
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, rgba(255,100,200,0.15), rgba(100,200,255,0.2), rgba(200,100,255,0.2), rgba(100,255,200,0.15));
+            animation: iridescentShift 18s infinite linear;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @keyframes iridescentShift { 0% { transform: rotate(0deg); opacity: 0.4; } 50% { transform: rotate(180deg); opacity: 0.7; } 100% { transform: rotate(360deg); opacity: 0.4; } }
+        .wrapper-container { max-width: 1300px; margin: 0 auto; position: relative; z-index: 2; }
         .glass-holo {
             background: rgba(12, 12, 25, 0.45);
             backdrop-filter: blur(14px) saturate(180%);
             border-radius: 40px;
             border: 1px solid rgba(255, 255, 255, 0.25);
-            padding: 28px 36px;
-            margin-bottom: 28px;
-            transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
-        .glass-holo:hover { border-color: rgba(255, 180, 255, 0.5); }
+        .header-card { padding: 28px 36px; margin-bottom: 28px; text-align: center; }
+        .logo-icon { font-size: 48px; background: linear-gradient(135deg, #ffb3ff, #9effff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        h1 { font-size: 44px; font-weight: 800; background: linear-gradient(120deg, #FFFFFF, #f0b3ff, #b6eaff); -webkit-background-clip: text; background-clip: text; color: transparent; }
         
-        h1 { 
-            font-size: 42px; 
-            background: linear-gradient(120deg, #FFFFFF, #f0b3ff, #b6eaff); 
-            -webkit-background-clip: text; 
-            background-clip: text; 
-            color: transparent;
-            margin-bottom: 10px;
-        }
-        
-        h2 { 
-            color: #d4c5ff; 
-            margin-bottom: 20px;
-            font-size: 24px;
+        /* Stats cards - THESE ARE THE TOTAL SHARE, ACTIVE, COMPLETED */
+        .session-stats-row {
             display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        /* Stats Grid */
-        .stats-grid { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 24px; 
+            gap: 24px;
+            justify-content: space-between;
+            flex-wrap: wrap;
             margin-bottom: 28px;
         }
-        
-        .stat-card { 
-            padding: 25px 20px; 
-            display: flex; 
-            align-items: center; 
-            gap: 18px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        
-        .stat-card:hover { 
-            transform: translateY(-5px); 
-            border-color: rgba(255,180,255,0.6);
-            background: rgba(20, 20, 50, 0.6);
-        }
-        
-        .stat-icon { 
-            font-size: 44px; 
-            background: linear-gradient(145deg, #ffb3ff, #aad0ff); 
-            -webkit-background-clip: text; 
-            background-clip: text; 
-            color: transparent; 
-        }
-        
-        .stat-info h3 { 
-            font-size: 38px; 
-            font-weight: 800; 
-            background: linear-gradient(to right, #fff, #e2caff); 
-            -webkit-background-clip: text; 
-            background-clip: text; 
-            color: transparent; 
-        }
-        
-        .stat-info p { 
-            color: rgba(210, 190, 255, 0.8); 
-            font-weight: 500;
-            font-size: 14px;
-        }
-        
-        .stat-info small {
-            color: #ffaa66;
-            font-size: 11px;
-        }
-        
-        /* Log Controls */
-        .log-controls { 
-            display: flex; 
-            gap: 12px; 
-            margin-bottom: 24px; 
-            flex-wrap: wrap; 
-            align-items: center;
-        }
-        
-        .session-selector { 
-            background: rgba(20,20,50,0.8); 
-            padding: 12px 20px; 
-            border-radius: 30px; 
-            color: white; 
-            border: 1px solid rgba(255,200,255,0.3);
-            font-family: 'Inter', monospace;
-            font-size: 14px;
+        .stat-pill {
             flex: 1;
-            min-width: 200px;
-            cursor: pointer;
-        }
-        
-        .session-selector option {
-            background: #0a0a1a;
-        }
-        
-        .log-btn { 
-            background: rgba(100,50,150,0.5); 
-            padding: 10px 24px; 
-            border: none; 
-            border-radius: 30px; 
-            color: white; 
-            cursor: pointer; 
-            transition: 0.2s; 
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .log-btn:hover { 
-            background: rgba(150,100,200,0.7); 
-            transform: translateY(-2px);
-        }
-        
-        .log-btn.active {
-            background: linear-gradient(135deg, #7248ff, #c55aff);
-            box-shadow: 0 0 10px rgba(114,72,255,0.5);
-        }
-        
-        .auto-refresh { 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            background: rgba(0,0,0,0.3);
-            padding: 8px 16px;
-            border-radius: 40px;
-        }
-        
-        .auto-refresh label {
-            color: white;
-            cursor: pointer;
-        }
-        
-        /* Logs Container */
-        .logs-container { 
-            background: rgba(0,0,0,0.5); 
-            border-radius: 20px; 
-            padding: 20px; 
-            max-height: 550px; 
-            overflow-y: auto;
-            font-family: 'Courier New', monospace;
-        }
-        
-        .log-entry { 
-            background: rgba(20,20,40,0.6); 
-            margin: 10px 0; 
-            padding: 14px 18px; 
-            border-radius: 12px; 
-            border-left: 3px solid #c55aff; 
-            font-size: 12px; 
-            transition: 0.2s;
-            animation: slideIn 0.3s ease;
-        }
-        
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-        
-        .log-entry:hover {
-            background: rgba(40,40,70,0.7);
-            transform: translateX(5px);
-        }
-        
-        .log-time { 
-            color: #ffb86c; 
-            margin-right: 12px;
-            font-weight: 500;
-        }
-        
-        .log-action { 
-            color: #6bc5ff; 
-            font-weight: bold; 
-            margin-right: 12px;
-            display: inline-block;
-            min-width: 140px;
-        }
-        
-        .log-data { 
-            color: #ddd; 
-            word-break: break-all;
-            font-size: 11px;
-        }
-        
-        .log-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 10px;
-            margin-left: 10px;
-        }
-        
-        .badge-success { background: rgba(0,255,100,0.2); color: #5effa3; }
-        .badge-error { background: rgba(255,50,50,0.2); color: #ff8888; }
-        .badge-info { background: rgba(100,100,255,0.2); color: #aaccff; }
-        
-        .reset-timer { 
-            color: #ffaa66; 
-            font-size: 12px; 
-            margin-top: 15px; 
-            text-align: center;
-            padding: 10px;
-            background: rgba(0,0,0,0.3);
+            background: rgba(20, 20, 50, 0.6);
+            backdrop-filter: blur(8px);
+            padding: 24px 20px;
             border-radius: 30px;
-        }
-        
-        .log-stats {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-            padding: 10px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 20px;
-            font-size: 13px;
-        }
-        
-        .log-stats span {
-            color: #c5b3ff;
-        }
-        
-        .log-stats strong {
-            color: white;
-        }
-        
-        .nav-links { 
-            display: flex; 
-            gap: 20px; 
-            justify-content: center; 
-            margin-top: 20px; 
-            flex-wrap: wrap; 
-        }
-        
-        .nav-link { 
-            color: #c5b3ff; 
-            text-decoration: none; 
-            padding: 8px 20px; 
-            border-radius: 30px; 
-            background: rgba(255,255,255,0.1); 
-            transition: 0.2s; 
-        }
-        
-        .nav-link:hover { 
-            background: rgba(255,255,255,0.2); 
-            color: white; 
-        }
-        
-        .empty-state {
             text-align: center;
-            padding: 60px 20px;
-            color: #aaa;
+            border: 1px solid rgba(255, 200, 255, 0.3);
+            transition: all 0.3s;
         }
+        .stat-pill:hover {
+            transform: translateY(-3px);
+            border-color: rgba(255, 150, 255, 0.6);
+        }
+        .stat-pill h3 { font-size: 42px; font-weight: 800; background: linear-gradient(135deg, #fff, #ffd6b3); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .stat-pill p { color: #bcaeff; font-weight: 500; margin-top: 8px; letter-spacing: 1px; }
+        .stat-icon-small { font-size: 32px; margin-bottom: 8px; color: #c8aaff; }
         
-        .empty-state i {
-            font-size: 48px;
-            margin-bottom: 15px;
-            opacity: 0.5;
+        .logs-container { padding: 24px; margin-top: 10px; }
+        .session-card {
+            background: rgba(10, 10, 28, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 150, 220, 0.4);
+            overflow: hidden;
+            transition: 0.2s;
         }
-        
-        @media (max-width: 760px) { 
-            .glass-holo { padding: 20px; } 
-            h1 { font-size: 28px; }
-            .stats-grid { grid-template-columns: 1fr; gap: 12px; }
-            .log-controls { flex-direction: column; }
-            .log-action { min-width: 100px; }
-            .log-entry { padding: 10px 12px; }
+        .session-header {
+            padding: 20px 24px;
+            background: rgba(25, 20, 55, 0.7);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
+        .session-id { font-weight: 700; color: #dbbaff; font-family: monospace; font-size: 13px; }
+        .session-status {
+            padding: 6px 16px;
+            border-radius: 60px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-running { background: #2a6f8f30; color: #8dd0ff; border: 1px solid #3aa8ff; }
+        .status-completed { background: #1f7a5530; color: #7affb9; border: 1px solid #32ff9e; }
+        .stat-badge { background: rgba(0,0,0,0.5); padding: 5px 12px; border-radius: 30px; font-size: 13px; }
+        .log-details {
+            padding: 16px 24px;
+            background: rgba(0,0,0,0.3);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            display: none;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-details.open { display: block; }
+        .log-entry {
+            font-size: 12px;
+            font-family: monospace;
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255,200,255,0.1);
+            color: #cdc9ff;
+        }
+        .log-time { color: #9f8eff; margin-right: 12px; }
+        .nav-back { margin-top: 30px; text-align: center; }
+        .nav-link { color: #c5b3ff; text-decoration: none; padding: 10px 24px; border-radius: 40px; background: rgba(255,255,255,0.1); display: inline-block; margin: 0 8px; }
+        @media (max-width: 700px) { .session-header { flex-direction: column; align-items: flex-start; } .stat-pill h3 { font-size: 28px; } }
     </style>
 </head>
 <body>
 <div class="wrapper-container">
-    <div class="glass-holo">
-        <h1><i class="fas fa-history"></i> Live Session Logs</h1>
-        <p style="color: rgba(230,220,255,0.7); margin-top: 10px;">
-            Real-time session monitoring • Logs reset every 5 hours • Showing Post IDs instead of full URLs
-        </p>
+    <div class="header-card glass-holo">
+        <i class="fas fa-scroll logo-icon"></i>
+        <h1>Live Session Logs</h1>
+        <p style="color:#b9adff; margin-top: 12px;">Real-time sharing activity & detailed session logs</p>
     </div>
 
-    <!-- Statistics Section -->
-    <div class="stats-grid">
-        <div class="stat-card glass-holo" onclick="location.href='/dashboard.html'">
-            <i class="fas fa-chart-line stat-icon"></i>
-            <div class="stat-info">
-                <h3 id="total-shares">0</h3>
-                <p>Total Shares <i class="fas fa-arrow-right" style="font-size:10px;"></i></p>
-                <small>Across all sessions</small>
-            </div>
+    <!-- STATS CARDS: Total Shares, Active Sessions, Completed - ONLY HERE, NOT ON DASHBOARD -->
+    <div class="session-stats-row">
+        <div class="stat-pill glass-holo">
+            <div class="stat-icon-small"><i class="fas fa-chart-line"></i></div>
+            <h3 id="logs-total-shares">0</h3>
+            <p>TOTAL SHARES</p>
         </div>
-        <div class="stat-card glass-holo" onclick="location.href='/dashboard.html'">
-            <i class="fas fa-users stat-icon"></i>
-            <div class="stat-info">
-                <h3 id="active-sessions">0</h3>
-                <p>Active Sessions <i class="fas fa-arrow-right" style="font-size:10px;"></i></p>
-                <small>Currently running</small>
-            </div>
+        <div class="stat-pill glass-holo">
+            <div class="stat-icon-small"><i class="fas fa-users"></i></div>
+            <h3 id="logs-active-sessions">0</h3>
+            <p>ACTIVE SESSIONS</p>
         </div>
-        <div class="stat-card glass-holo" onclick="location.href='/dashboard.html'">
-            <i class="fas fa-check-circle stat-icon"></i>
-            <div class="stat-info">
-                <h3 id="completed-sessions">0</h3>
-                <p>Completed <i class="fas fa-arrow-right" style="font-size:10px;"></i></p>
-                <small>Finished sessions</small>
-            </div>
+        <div class="stat-pill glass-holo">
+            <div class="stat-icon-small"><i class="fas fa-check-circle"></i></div>
+            <h3 id="logs-completed-sessions">0</h3>
+            <p>COMPLETED</p>
         </div>
     </div>
 
-    <div class="glass-holo">
-        <h2><i class="fas fa-terminal"></i> Session Log Viewer</h2>
-        
-        <div class="log-controls">
-            <select id="session-select" class="session-selector" onchange="loadSessionLogs()">
-                <option value="">📋 Select a session to view logs...</option>
-            </select>
-            <div class="auto-refresh">
-                <input type="checkbox" id="auto-refresh" checked> 
-                <label><i class="fas fa-sync-alt"></i> Auto-refresh (3s)</label>
-            </div>
-            <button class="log-btn" onclick="loadSessionLogs()">
-                <i class="fas fa-refresh"></i> Refresh
-            </button>
-            <button class="log-btn" id="show-last5-btn" onclick="setShowMode('last5')">
-                <i class="fas fa-list"></i> Last 5 Logs
-            </button>
-            <button class="log-btn" id="show-all-btn" onclick="setShowMode('all')">
-                <i class="fas fa-database"></i> Show All Logs
-            </button>
-        </div>
-        
-        <div id="log-stats" class="log-stats" style="display: none;">
-            <span><i class="fas fa-chart-bar"></i> <strong id="log-count">0</strong> logs loaded</span>
-            <span><i class="fas fa-clock"></i> Mode: <strong id="display-mode">Last 5</strong></span>
-        </div>
-        
-        <div id="logs-container" class="logs-container">
-            <div class="empty-state">
-                <i class="fas fa-folder-open"></i>
-                <p>Select a session from the dropdown to view logs</p>
-                <small style="color: #666;">Logs show Post ID instead of full URL for privacy</small>
-            </div>
-        </div>
-        
-        <div class="reset-timer">
-            <i class="fas fa-sync-alt"></i> Logs automatically reset every 5 hours • 
-            <i class="fas fa-hashtag"></i> Showing Post IDs only
-        </div>
+    <div class="logs-container glass-holo" id="sessionsLogsContainer">
+        <div style="padding: 20px; text-align: center; color: #aaa;" id="loadingLogsMsg">Loading sessions...</div>
+        <div id="sessionLogsList"></div>
     </div>
 
-    <div class="nav-links">
+    <div class="nav-back">
         <a href="/dashboard.html" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
         <a href="/api-docs.html" class="nav-link"><i class="fas fa-code"></i> API Docs</a>
-        <a href="/tutorial.html" class="nav-link"><i class="fas fa-book-open"></i> Tutorial</a>
     </div>
 </div>
 
 <script>
-    let refreshInterval = null;
-    let currentSessionId = '';
-    let allSessionsData = [];
-    let currentLogsData = [];
-    let showMode = 'last5'; // 'last5' or 'all'
-    let lastResetTime = localStorage.getItem('logsResetTime');
-    const RESET_INTERVAL = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
+    let activeRefresh = null;
     
-    // Check if logs need reset (every 5 hours)
-    function checkLogsReset() {
-        const now = Date.now();
-        if (!lastResetTime || (now - parseInt(lastResetTime)) >= RESET_INTERVAL) {
-            localStorage.setItem('logsResetTime', now);
-            localStorage.removeItem('cachedLogs');
-            console.log('Logs cache reset (5 hour interval)');
-            return true;
-        }
-        return false;
-    }
-    
-    // Load sessions and update statistics
-    async function loadSessionsAndStats() {
+    async function fetchSessionsAndLogs() {
         try {
-            const response = await fetch('/api/sessions/summary');
-            const data = await response.json();
+            const res = await fetch('/api/sessions/summary');
+            const data = await res.json();
+            if (!data.success) throw new Error('summary fail');
+            const sessions = data.sessions || [];
+            const totals = data.totals || { totalShares: 0, activeSessions: 0, completedSessions: 0 };
             
-            if (data.success) {
-                allSessionsData = data.sessions || [];
-                
-                // Update statistics
-                document.getElementById('total-shares').textContent = data.totals?.totalShares || 0;
-                document.getElementById('active-sessions').textContent = data.totals?.activeSessions || 0;
-                document.getElementById('completed-sessions').textContent = data.totals?.completedSessions || 0;
-                
-                // Update session dropdown
-                const select = document.getElementById('session-select');
-                const currentValue = select.value;
-                
-                select.innerHTML = '<option value="">📋 Select a session to view logs...</option>';
-                
-                if (allSessionsData.length === 0) {
-                    select.innerHTML += '<option value="" disabled>✨ No active sessions</option>';
-                } else {
-                    allSessionsData.forEach(session => {
-                        const option = document.createElement('option');
-                        option.value = session.sessionId;
-                        const postId = extractPostId(session.url);
-                        const statusIcon = session.status === 'running' ? '🟢' : (session.status === 'completed' ? '✅' : '🔴');
-                        option.textContent = `${statusIcon} ${session.sessionId.substring(0, 8)}... | ${postId} | ${session.sharedCount}/${session.targetAmount}`;
-                        select.appendChild(option);
-                    });
-                }
-                
-                // Restore previous selection if still valid
-                if (currentValue && document.querySelector(`option[value="${currentValue}"]`)) {
-                    select.value = currentValue;
-                    if (currentSessionId !== currentValue) {
-                        currentSessionId = currentValue;
-                        loadSessionLogs();
-                    }
-                }
+            // Update stats cards
+            document.getElementById('logs-total-shares').innerText = totals.totalShares;
+            document.getElementById('logs-active-sessions').innerText = totals.activeSessions;
+            document.getElementById('logs-completed-sessions').innerText = totals.completedSessions;
+            
+            const container = document.getElementById('sessionLogsList');
+            if (sessions.length === 0) {
+                container.innerHTML = '<div style="padding: 30px; text-align:center;">✨ No active or completed sessions ✨</div>';
+                return;
             }
-        } catch (error) {
-            console.error('Error loading sessions:', error);
-        }
-    }
-    
-    function extractPostId(url) {
-        if (!url) return 'Unknown';
-        const match = url.match(/\/posts\/(\d+)/) || url.match(/story\.php\?story_fbid=(\d+)/);
-        if (match) {
-            return `Post: ${match[1].substring(0, 12)}${match[1].length > 12 ? '...' : ''}`;
-        }
-        const parts = url.split('/');
-        const lastPart = parts[parts.length - 1];
-        return lastPart.length > 15 ? lastPart.substring(0, 15) + '...' : lastPart;
-    }
-    
-    async function loadSessionLogs() {
-        const sessionId = document.getElementById('session-select').value;
-        if (!sessionId) {
-            document.getElementById('logs-container').innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-folder-open"></i>
-                    <p>Select a session from the dropdown to view logs</p>
-                    <small>Logs show Post ID instead of full URL for privacy</small>
-                </div>
-            `;
-            document.getElementById('log-stats').style.display = 'none';
-            currentSessionId = '';
-            return;
-        }
-        
-        currentSessionId = sessionId;
-        
-        try {
-            const response = await fetch(`/api/session/${sessionId}/logs`);
-            const data = await response.json();
-            
-            if (data.success && data.logs) {
-                currentLogsData = data.logs;
-                displayLogs(currentLogsData);
-                document.getElementById('log-stats').style.display = 'flex';
-                document.getElementById('log-count').textContent = currentLogsData.length;
-                document.getElementById('display-mode').textContent = showMode === 'last5' ? 'Last 5' : `All (${currentLogsData.length})`;
-            } else {
-                document.getElementById('logs-container').innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-inbox"></i>
-                        <p>No logs found for this session</p>
-                        <small>Logs will appear when sharing starts</small>
+            container.innerHTML = '';
+            for (const sess of sessions) {
+                const sessionCard = document.createElement('div');
+                sessionCard.className = 'session-card';
+                const statusClass = sess.status === 'running' ? 'status-running' : 'status-completed';
+                const statusText = sess.status === 'running' ? 'PROCESSING' : 'COMPLETED';
+                sessionCard.innerHTML = `
+                    <div class="session-header" data-sessionid="${sess.sessionId}">
+                        <div>
+                            <i class="fas fa-microchip"></i> 
+                            <span class="session-id">${sess.sessionId.substring(0, 16)}...</span>
+                            <div style="font-size:11px; color:#9a8acf; margin-top:4px;">${sess.url ? sess.url.substring(0, 55) : 'No URL'}</div>
+                        </div>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <span class="stat-badge"><i class="fas fa-share-alt"></i> ${sess.sharedCount || 0}/${sess.targetAmount || 0}</span>
+                            <span class="session-status ${statusClass}"><i class="fas ${sess.status === 'running' ? 'fa-sync-alt fa-spin' : 'fa-check-circle'}"></i> ${statusText}</span>
+                        </div>
+                        <div><i class="fas fa-chevron-down" style="cursor:pointer; color:#aa99ff;"></i></div>
+                    </div>
+                    <div class="log-details" id="logs-${sess.sessionId}">
+                        <div style="padding: 8px;"><i class="fas fa-spinner fa-pulse"></i> Loading logs...</div>
                     </div>
                 `;
-                document.getElementById('log-stats').style.display = 'none';
+                container.appendChild(sessionCard);
+                
+                const header = sessionCard.querySelector('.session-header');
+                const logDiv = sessionCard.querySelector('.log-details');
+                header.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const isOpen = logDiv.classList.contains('open');
+                    if (!isOpen) {
+                        logDiv.classList.add('open');
+                        if (logDiv.innerHTML.includes('Loading logs...')) {
+                            await loadSessionLogs(sess.sessionId, logDiv);
+                        }
+                    } else {
+                        logDiv.classList.remove('open');
+                    }
+                });
             }
-        } catch (error) {
-            console.error('Error loading logs:', error);
-            document.getElementById('logs-container').innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <p>Error loading logs</p>
-                    <small>${error.message}</small>
-                </div>
-            `;
-        }
+        } catch (err) { console.error(err); }
     }
     
-    function displayLogs(logs) {
-        const container = document.getElementById('logs-container');
-        let logsToShow = logs;
-        
-        if (showMode === 'last5') {
-            logsToShow = logs.slice(-5);
-        }
-        
-        if (logsToShow.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-inbox"></i>
-                    <p>No logs available</p>
-                </div>
-            `;
-            return;
-        }
-        
-        container.innerHTML = '';
-        
-        // Display in reverse chronological order (newest first)
-        [...logsToShow].reverse().forEach(log => {
-            const logDiv = document.createElement('div');
-            logDiv.className = 'log-entry';
-            
-            const time = new Date(log.timestamp).toLocaleTimeString();
-            const date = new Date(log.timestamp).toLocaleDateString();
-            const actionIcon = getActionIcon(log.action);
-            const badge = getActionBadge(log.action);
-            
-            // Format data to show Post ID instead of full URL
-            let displayData = { ...log.data };
-            if (displayData.url) {
-                displayData.postId = extractPostId(displayData.url);
-                delete displayData.url;
+    async function loadSessionLogs(sessionId, containerEl) {
+        try {
+            const res = await fetch(`/api/session/${sessionId}/logs`);
+            const data = await res.json();
+            if (data.success && data.logs) {
+                const logs = data.logs;
+                if (logs.length === 0) {
+                    containerEl.innerHTML = '<div style="padding: 12px;">📭 No detailed logs yet.</div>';
+                    return;
+                }
+                const logsHtml = logs.slice(-50).map(log => `
+                    <div class="log-entry">
+                        <span class="log-time">${new Date(log.timestamp).toLocaleTimeString()}</span>
+                        <span><strong>${log.action}</strong></span>
+                        <span style="color:#ba9eff;"> ${typeof log.data === 'object' ? JSON.stringify(log.data).substring(0, 100) : log.data}</span>
+                    </div>
+                `).join('');
+                containerEl.innerHTML = `<div style="max-height:250px; overflow-y:auto;">${logsHtml}</div>`;
+            } else {
+                containerEl.innerHTML = '<div>Failed to load logs</div>';
             }
-            
-            logDiv.innerHTML = `
-                <div>
-                    <span class="log-time"><i class="far fa-clock"></i> ${date} ${time}</span>
-                    <span class="log-action">${actionIcon} ${log.action}</span>
-                    ${badge}
-                </div>
-                <div class="log-data">${JSON.stringify(displayData, null, 2)}</div>
-            `;
-            container.appendChild(logDiv);
-        });
-        
-        // Auto-scroll to top (newest logs)
-        container.scrollTop = 0;
-    }
-    
-    function getActionIcon(action) {
-        const icons = {
-            'session_started': '🚀',
-            'share_success': '✅',
-            'share_error': '❌',
-            'session_completed': '🏁',
-            'session_stopped': '⏹️',
-            'rate_limited': '⚠️',
-            'session_stopped_due_to_errors': '💥'
-        };
-        return icons[action] || '📝';
-    }
-    
-    function getActionBadge(action) {
-        if (action === 'share_success') {
-            return '<span class="log-badge badge-success">SUCCESS</span>';
-        } else if (action === 'share_error') {
-            return '<span class="log-badge badge-error">ERROR</span>';
-        } else if (action === 'session_started') {
-            return '<span class="log-badge badge-info">START</span>';
-        } else if (action === 'session_completed') {
-            return '<span class="log-badge badge-success">COMPLETE</span>';
-        }
-        return '';
-    }
-    
-    function setShowMode(mode) {
-        showMode = mode;
-        
-        // Update button styles
-        const last5Btn = document.getElementById('show-last5-btn');
-        const allBtn = document.getElementById('show-all-btn');
-        
-        if (mode === 'last5') {
-            last5Btn.classList.add('active');
-            allBtn.classList.remove('active');
-        } else {
-            last5Btn.classList.remove('active');
-            allBtn.classList.add('active');
-        }
-        
-        if (currentLogsData.length > 0) {
-            displayLogs(currentLogsData);
-            document.getElementById('display-mode').textContent = mode === 'last5' ? 'Last 5' : `All (${currentLogsData.length})`;
+        } catch (err) {
+            containerEl.innerHTML = '<div>Error fetching logs</div>';
         }
     }
     
-    async function autoRefresh() {
-        if (document.getElementById('auto-refresh').checked) {
-            await loadSessionsAndStats();
-            if (currentSessionId) {
-                await loadSessionLogs();
-            }
-        }
-    }
-    
-    // Initialize
-    checkLogsReset();
-    loadSessionsAndStats();
-    
-    if (refreshInterval) clearInterval(refreshInterval);
-    refreshInterval = setInterval(autoRefresh, 3000);
-    
-    // Set default active button
-    document.getElementById('show-last5-btn').classList.add('active');
+    fetchSessionsAndLogs();
+    if (activeRefresh) clearInterval(activeRefresh);
+    activeRefresh = setInterval(fetchSessionsAndLogs, 3200);
 </script>
 </body>
 </html>

@@ -631,7 +631,9 @@ setInterval(() => {
     }
 }, 3600000);
 
-// 404 handler for HTML pages
+// ============== HTML PAGE ROUTES ==============
+
+// Main pages
 app.get('/dashboard.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
@@ -644,21 +646,91 @@ app.get('/api-docs.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'api-docs.html'));
 });
 
-// Default route
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+// Tutorial page
+app.get('/tutorial.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'tutorial.html'));
 });
 
-// 404 handler for API
-app.use('/api/*', (req, res) => {
-    res.status(404).json({
-        success: false,
-        error: 'API endpoint not found',
-        path: req.path
+// Default route - redirect to dashboard
+app.get('/', (req, res) => {
+    res.redirect('/dashboard.html');
+});
+
+// ============== 404 ERROR HANDLER ==============
+// Handle 404 for non-API routes - serve the 404.html page
+app.use((req, res, next) => {
+    // Skip API routes - they already have their own 404 handler above
+    if (req.path.startsWith('/api/')) {
+        return next();
+    }
+    
+    // Check if the request accepts HTML
+    const acceptHeader = req.headers.accept || '';
+    if (acceptHeader.includes('text/html')) {
+        // Serve the custom 404 HTML page
+        res.status(404);
+        res.sendFile(path.join(__dirname, 'public', '404.html'), (err) => {
+            if (err) {
+                // Fallback if 404.html doesn't exist
+                res.status(404).send(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head><title>404 - Page Not Found</title></head>
+                    <body style="font-family: Arial; text-align: center; padding: 50px;">
+                        <h1>404 - Page Not Found</h1>
+                        <p>The page you are looking for does not exist.</p>
+                        <a href="/dashboard.html">Return to Dashboard</a>
+                    </body>
+                    </html>
+                `);
+            }
+        });
+    } else {
+        res.status(404).json({
+            success: false,
+            error: 'Endpoint not found',
+            path: req.path
+        });
+    }
+});
+
+// ============== 500 ERROR HANDLER ==============
+// Global error handler for uncaught errors
+app.use((err, req, res, next) => {
+    console.error('Unhandled error:', err);
+    console.error('Error stack:', err.stack);
+    
+    // For API routes, return JSON
+    if (req.path.startsWith('/api/')) {
+        return res.status(500).json({
+            success: false,
+            error: 'Internal server error',
+            message: err.message || 'Something went wrong on the server'
+        });
+    }
+    
+    // For HTML routes, serve the custom 500 page
+    res.status(500);
+    res.sendFile(path.join(__dirname, 'public', '500.html'), (sendErr) => {
+        if (sendErr) {
+            // Fallback if 500.html doesn't exist
+            res.status(500).send(`
+                <!DOCTYPE html>
+                <html>
+                <head><title>500 - Server Error</title></head>
+                <body style="font-family: Arial; text-align: center; padding: 50px;">
+                    <h1>500 - Internal Server Error</h1>
+                    <p>Something went wrong on our end. Please try again later.</p>
+                    <a href="/dashboard.html">Return to Dashboard</a>
+                </body>
+                </html>
+            `);
+        }
     });
 });
 
-// Create logs directory and start server
+// ============== START SERVER ==============
+// Create logs directory
 (async () => {
     try {
         await fs.mkdir('logs', { recursive: true });
@@ -682,6 +754,10 @@ app.listen(PORT, () => {
 ║  ♾️  Unlimited concurrent sessions enabled                      ║
 ║  ⏱️  Fixed delay: 2 seconds enforced                            ║
 ║  📊 Health check:   http://localhost:${PORT}/api/health         ║
+╠══════════════════════════════════════════════════════════════╣
+║  📄 Error Pages:                                               ║
+║  🔴 404 Not Found:     http://localhost:${PORT}/404.html        ║
+║  🟠 500 Server Error:   http://localhost:${PORT}/500.html        ║
 ╚══════════════════════════════════════════════════════════════╝
     `);
 });

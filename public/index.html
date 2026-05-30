@@ -2,604 +2,443 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Geometric Flow | Facebook Creator + Temp Mail</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShareBoost | Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: radial-gradient(circle at 20% 30%, #0a0f1e, #03060c);
             font-family: 'Inter', sans-serif;
-            color: #eef5ff;
+            background: radial-gradient(circle at 10% 20%, rgb(0, 0, 0) 0%, #0a0a1a 100%);
             min-height: 100vh;
-            overflow-x: hidden;
+            padding: 40px 24px;
             position: relative;
+            overflow-x: hidden;
         }
-
-        /* Abstract Geometry Animations */
-        .geometry-bg {
+        body::before {
+            content: "";
             position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, rgba(255,100,200,0.15), rgba(100,200,255,0.2), rgba(200,100,255,0.2), rgba(100,255,200,0.15));
+            animation: iridescentShift 18s infinite linear;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @keyframes iridescentShift {
+            0% { transform: rotate(0deg); opacity: 0.4; }
+            50% { transform: rotate(180deg); opacity: 0.7; }
+            100% { transform: rotate(360deg); opacity: 0.4; }
+        }
+        .wrapper-container { max-width: 1400px; margin: 0 auto; position: relative; z-index: 2; }
+        .glass-holo {
+            background: rgba(12, 12, 25, 0.45);
+            backdrop-filter: blur(14px) saturate(180%);
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+        .glass-holo:hover { border-color: rgba(255, 180, 255, 0.5); transform: translateY(-3px); }
+        .container { padding: 28px 36px; margin-bottom: 28px; }
+        .logo-container { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 20px; flex-wrap: wrap; }
+        .logo-icon { font-size: 58px; background: linear-gradient(135deg, #ffb3ff, #9effff, #c084fc); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        h1 { font-size: 52px; font-weight: 800; background: linear-gradient(120deg, #FFFFFF, #f0b3ff, #b6eaff, #ffd6b3); background-size: 300% 300%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmerHolo 5s ease infinite; }
+        @keyframes shimmerHolo { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .tagline { text-align: center; color: rgba(230, 220, 255, 0.85); margin-bottom: 28px; font-size: 1rem; }
+        .badge-container { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
+        .badge { background: rgba(20, 20, 50, 0.6); backdrop-filter: blur(8px); padding: 8px 20px; border-radius: 40px; font-size: 13px; font-weight: 500; color: #fff0f5; display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(255, 200, 255, 0.4); cursor: pointer; transition: 0.2s; }
+        .badge:hover { background: rgba(100, 50, 150, 0.6); transform: scale(1.05); }
+        .form-wrapper { padding: 38px 38px; margin-bottom: 28px; }
+        .form-wrapper h2 { font-size: 32px; background: linear-gradient(135deg, #fff, #cfb3ff); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 8px; display: flex; align-items: center; gap: 14px; }
+        .form-description { color: rgba(210, 200, 250, 0.8); margin-bottom: 28px; font-size: 0.9rem; }
+        .form-group { margin-bottom: 24px; }
+        .form-group label { display: flex; align-items: center; gap: 10px; color: #f0eaff; font-weight: 500; margin-bottom: 10px; }
+        input, textarea { width: 100%; padding: 14px 18px; background: rgba(10, 10, 25, 0.8); border: 1px solid rgba(160, 130, 255, 0.5); border-radius: 24px; font-size: 14px; font-family: 'Inter', monospace; color: #f3eefc; }
+        input:focus, textarea:focus { outline: none; border-color: #ff86e0; box-shadow: 0 0 0 3px rgba(200, 100, 255, 0.3); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .submit-btn { width: 100%; padding: 16px; background: linear-gradient(100deg, #7248ff, #c55aff, #ff6eb4); background-size: 200% 200%; border: none; border-radius: 40px; font-size: 18px; font-weight: 700; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; margin-top: 18px; box-shadow: 0 8px 20px rgba(100, 0, 255, 0.4); }
+        .submit-btn:hover { transform: translateY(-3px); box-shadow: 0 18px 35px rgba(150, 50, 255, 0.5); background-position: 100% 100%; }
+        .result-message { margin-top: 20px; padding: 14px; border-radius: 60px; text-align: center; font-weight: 600; display: none; animation: fadeSlide 0.3s ease; }
+        .result-message.success { background: rgba(0, 255, 180, 0.18); border: 1px solid #2effb0; color: #c5ffdf; display: block; }
+        .result-message.error { background: rgba(255, 70, 130, 0.2); border: 1px solid #ff6e8b; color: #ffbcbc; display: block; }
+        @keyframes fadeSlide { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* TikTok Video Player - Centered */
+        .tiktok-section { 
+            margin-bottom: 28px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .tiktok-card {
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        .video-container { 
+            position: relative;
+            padding-bottom: 75%; /* 4:3 Aspect Ratio */
+            height: 0;
+            overflow: hidden;
+            border-radius: 20px;
+            background: #000;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .video-container video { 
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 0;
-            overflow: hidden;
-            pointer-events: none;
+            object-fit: cover;
         }
-
-        .geo-shape {
-            position: absolute;
-            background: rgba(79, 172, 254, 0.08);
-            backdrop-filter: blur(2px);
-            border-radius: 48% 52% 61% 39% / 43% 54% 46% 57%;
-            animation: floatShape 22s infinite ease-in-out;
-            border: 1px solid rgba(0, 255, 255, 0.2);
-            box-shadow: 0 0 25px rgba(0, 255, 255, 0.05);
-        }
-
-        .geo-shape-1 { width: 420px; height: 420px; top: -150px; left: -120px; background: linear-gradient(135deg, #00d2ff10, #3a7bd510); animation-duration: 28s; }
-        .geo-shape-2 { width: 380px; height: 380px; bottom: -100px; right: -150px; background: linear-gradient(225deg, #7928ca10, #ff008010); border-radius: 67% 33% 45% 55% / 38% 57% 43% 62%; animation-duration: 35s; }
-        .geo-shape-3 { width: 280px; height: 280px; top: 40%; left: 70%; background: rgba(20, 157, 200, 0.05); border-radius: 40% 60% 70% 30% / 40% 50% 50% 60%; animation-duration: 19s; }
-        .geo-shape-4 { width: 200px; height: 200px; bottom: 15%; left: 5%; background: rgba(0, 255, 179, 0.05); border-radius: 63% 37% 29% 71% / 44% 45% 55% 56%; animation-duration: 26s; }
-        .geo-shape-5 { width: 150px; height: 150px; top: 65%; left: 45%; background: rgba(255, 64, 129, 0.04); border-radius: 32% 68% 42% 58% / 68% 38% 62% 32%; animation-duration: 17s; }
-
-        @keyframes floatShape {
-            0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-            50% { transform: translate(30px, -40px) rotate(6deg) scale(1.05); }
-            100% { transform: translate(-20px, 20px) rotate(-3deg) scale(0.98); }
-        }
-
-        /* Main container */
-        .container {
-            position: relative;
-            z-index: 2;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem;
-        }
-
-        /* header & glass cards */
-        .glass-panel {
-            background: rgba(15, 25, 45, 0.55);
-            backdrop-filter: blur(12px);
-            border-radius: 2rem;
-            border: 1px solid rgba(0, 255, 255, 0.25);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 255, 255, 0.1) inset;
-            transition: all 0.2s ease;
-        }
-
-        .hero {
+        .video-info { 
+            padding: 15px 20px;
             text-align: center;
-            margin-bottom: 2.8rem;
-            padding: 1.8rem 1rem;
-            background: rgba(0, 10, 25, 0.4);
-            border-radius: 2rem;
-            border-bottom: 2px solid cyan;
         }
-
-        .hero h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #FFFFFF, #4af0ff, #a855f7);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            letter-spacing: -0.02em;
-        }
-
-        .hero p {
-            color: #b0d4ff;
-            margin-top: 0.5rem;
-        }
-
-        .badge {
-            background: rgba(0, 255, 255, 0.2);
-            border-radius: 40px;
-            padding: 0.2rem 1rem;
-            font-size: 0.75rem;
-            display: inline-block;
-            margin-top: 1rem;
+        .video-title { 
+            color: white; 
+            font-size: 14px; 
+            margin-bottom: 8px;
             font-weight: 500;
-            border: 1px solid cyan;
         }
-
-        /* grid layout */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 1.8rem;
-            margin-top: 1rem;
-        }
-
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .stat-card {
-            background: rgba(0, 20, 40, 0.6);
-            border-radius: 1.5rem;
-            padding: 1.2rem;
-            text-align: center;
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            transition: 0.2s;
-        }
-
-        .stat-card i {
-            font-size: 1.8rem;
-            color: #0ff;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 800;
-            color: white;
-        }
-
-        /* form styles */
-        .input-group {
-            margin-bottom: 1rem;
-        }
-
-        label {
+        .video-author { 
+            color: #c5b3ff; 
+            font-size: 12px; 
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            margin-bottom: 6px;
-            color: #bdf;
         }
-
-        input, select {
-            width: 100%;
-            background: rgba(0, 5, 15, 0.7);
-            border: 1px solid #2c4c6e;
-            padding: 12px 16px;
-            border-radius: 1.2rem;
+        .refresh-video { 
+            background: linear-gradient(135deg, rgba(114,72,255,0.8), rgba(197,90,255,0.8));
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 10px 24px;
+            border-radius: 30px;
             color: white;
-            font-size: 0.9rem;
+            cursor: pointer;
             transition: 0.2s;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: #0ff;
-            box-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
-        }
-
-        .btn-primary {
-            background: linear-gradient(95deg, #0a7b9e, #0f56c3);
-            border: none;
+            margin-top: 15px;
             width: 100%;
-            padding: 12px;
-            border-radius: 2rem;
             font-weight: 600;
-            color: white;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: 0.2s;
-            box-shadow: 0 5px 12px rgba(0, 160, 255, 0.2);
-            margin-top: 8px;
-        }
-
-        .btn-primary:hover {
-            transform: scale(0.98);
-            background: linear-gradient(95deg, #0c8db3, #1a66d6);
-            box-shadow: 0 0 12px #0ff6;
-        }
-
-        .btn-secondary {
-            background: rgba(20, 40, 70, 0.9);
-            border: 1px solid #3c6e9e;
-            padding: 10px;
-            border-radius: 2rem;
-            color: white;
-            cursor: pointer;
-            transition: 0.2s;
-            font-weight: 500;
-        }
-
-        .btn-secondary:hover {
-            background: #0f2b44;
-            border-color: cyan;
-        }
-
-        .result-card {
-            background: #07121fcc;
-            border-radius: 1.2rem;
-            padding: 1rem;
-            margin-top: 1rem;
-            font-size: 0.8rem;
-            border-left: 4px solid cyan;
-            word-break: break-all;
-        }
-
-        .accounts-list {
-            max-height: 360px;
-            overflow-y: auto;
-        }
-
-        .account-item {
-            background: #0a1424cc;
-            margin-bottom: 0.75rem;
-            padding: 0.8rem;
-            border-radius: 1.2rem;
-            border: 1px solid #1f405e;
-            font-size: 0.75rem;
-        }
-
-        .account-item i {
-            margin-right: 8px;
-            color: cyan;
-        }
-
-        .flex-between {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
-
-        hr {
-            border-color: #1e4970;
-            margin: 1rem 0;
+        .refresh-video:hover { 
+            background: linear-gradient(135deg, rgba(114,72,255,1), rgba(197,90,255,1));
+            transform: translateY(-2px);
         }
-
-        .error-msg {
-            color: #ffa6b0;
-            font-size: 0.75rem;
-            margin-top: 5px;
+        
+        /* Process Cards */
+        .processing-list { display: flex; flex-direction: column; gap: 16px; }
+        .process-card { background: rgba(20, 15, 45, 0.6); backdrop-filter: blur(12px); padding: 18px 22px; border-radius: 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; border: 1px solid rgba(255, 180, 220, 0.35); }
+        .process-info { flex: 2; min-width: 200px; }
+        .process-url { color: #ffe2ff; font-weight: 500; font-size: 0.85rem; margin-bottom: 10px; word-break: break-all; }
+        .process-progress { display: flex; align-items: center; gap: 14px; }
+        .progress-bar { flex: 1; height: 8px; background: rgba(255, 255, 255, 0.2); border-radius: 12px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #b77eff, #fd93d0); border-radius: 12px; transition: width 0.25s; }
+        .process-stats { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+        .stat-badge { background: rgba(0, 0, 0, 0.45); padding: 6px 14px; border-radius: 40px; font-size: 12px; color: #dbcaff; }
+        .status-badge { padding: 5px 14px; border-radius: 40px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+        .status-running { background: rgba(0, 200, 255, 0.3); color: #9adcff; border: 1px solid #3dc2ff; }
+        .status-completed { background: rgba(0, 255, 170, 0.25); color: #b5ffcf; border: 1px solid #4effb2; }
+        
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 24px; margin-bottom: 28px; }
+        .stat-card { padding: 28px 22px; display: flex; align-items: center; gap: 18px; cursor: pointer; transition: 0.2s; }
+        .stat-card:hover { transform: translateY(-5px); border-color: rgba(255,180,255,0.6); }
+        .stat-icon { font-size: 44px; background: linear-gradient(145deg, #ffb3ff, #aad0ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .stat-info h3 { font-size: 38px; font-weight: 800; background: linear-gradient(to right, #fff, #e2caff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .stat-info p { color: rgba(210, 190, 255, 0.8); font-weight: 500; }
+        
+        /* Two Column Layout */
+        .two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+        @media (max-width: 900px) { 
+            .two-column { grid-template-columns: 1fr; }
+            .tiktok-card { max-width: 100%; }
         }
-
-        .info-note {
-            font-size: 0.7rem;
-            color: #8ab3cf;
-            margin-top: 4px;
-            font-style: italic;
+        
+        .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; color: #f0eaff; }
+        .section-header h2 { font-size: 26px; display: flex; align-items: center; gap: 12px; }
+        .session-count { background: rgba(255, 150, 255, 0.25); padding: 5px 16px; border-radius: 60px; font-weight: 600; }
+        
+        .nav-links { display: flex; gap: 20px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+        .nav-link { color: #c5b3ff; text-decoration: none; padding: 8px 20px; border-radius: 30px; background: rgba(255,255,255,0.1); transition: 0.2s; }
+        .nav-link:hover { background: rgba(255,255,255,0.2); color: white; }
+        
+        @media (max-width: 760px) { 
+            .form-row { grid-template-columns: 1fr; gap: 12px; } 
+            .container, .form-wrapper { padding: 24px; } 
+            h1 { font-size: 38px; }
         }
-
-        @media (max-width: 900px) {
-            .dashboard-grid { grid-template-columns: 1fr; }
-            .hero h1 { font-size: 2rem; }
-        }
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0a111f;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: cyan;
-            border-radius: 10px;
-        }
-        .spinner {
-            border: 2px solid rgba(0,255,255,0.2);
-            border-top: 2px solid cyan;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 0.7s linear infinite;
-            display: inline-block;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .loading-spinner { text-align: center; padding: 40px; color: #c5b3ff; }
     </style>
 </head>
 <body>
-<div class="geometry-bg">
-    <div class="geo-shape geo-shape-1"></div>
-    <div class="geo-shape geo-shape-2"></div>
-    <div class="geo-shape geo-shape-3"></div>
-    <div class="geo-shape geo-shape-4"></div>
-    <div class="geo-shape geo-shape-5"></div>
-</div>
-
-<div class="container">
-    <div class="hero glass-panel">
-        <h1><i class="fas fa-cube"></i> GEOMETRIC FLOW</h1>
-        <p>Facebook Account Generator · Temp Mail · Abstract Sync</p>
-        <div class="badge"><i class="fas fa-shield-alt"></i> Real API · Longtime Keys · Optional Name Fields</div>
+<div class="wrapper-container">
+    <div class="container glass-holo">
+        <div class="logo-container">
+            <i class="fas fa-share-alt logo-icon"></i>
+            <h1>SHARE<span>BOOSTER</span></h1>
+        </div>
+        <p class="tagline">Holographic Iridescent Engine • Automated Facebook Post Distribution</p>
+        <div class="badge-container">
+            <span class="badge" onclick="location.href='/dashboard.html'"><i class="fas fa-tachometer-alt"></i> Dashboard</span>
+            <span class="badge" onclick="location.href='/logs.html'"><i class="fas fa-history"></i> Live Logs</span>
+            <span class="badge" onclick="location.href='/api-docs.html'"><i class="fas fa-code"></i> API Docs</span>
+        </div>
     </div>
 
-    <div class="dashboard-grid">
-        <!-- LEFT: Creation Panel -->
-        <div class="glass-panel" style="padding: 1.5rem;">
-            <h3 style="display: flex; gap: 12px; margin-bottom: 1.2rem;"><i class="fas fa-magic" style="color:cyan"></i> Instant Facebook Creator</h3>
-            <div class="input-group">
-                <label><i class="fas fa-envelope"></i> Email address *</label>
-                <input type="email" id="createEmail" placeholder="user@example.com" value="">
-                <div class="flex-between" style="margin-top: 8px;">
-                    <span style="font-size:0.7rem;"><i class="fas fa-bolt"></i> Use temp mail below</span>
-                    <button id="fillTempMailBtn" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size:0.7rem;"><i class="fas fa-paste"></i> Use latest temp email</button>
+    <div class="two-column">
+        <div class="form-wrapper glass-holo">
+            <h2><i class="fas fa-rocket"></i> Ignite Campaign</h2>
+            <p class="form-description">Inject cookie credentials & target URL — premium booster engine</p>
+            <form onsubmit="submitForm(event)" class="form-container">
+                <div class="form-group">
+                    <label><i class="fas fa-key"></i> Facebook Cookie Array</label>
+                    <textarea id="cookies" placeholder='[{"key":"sb","value":"xxx"},{"key":"datr","value":"xxx"}]' rows="3"></textarea>
                 </div>
-            </div>
-            <div class="input-group">
-                <label><i class="fas fa-user"></i> First Name <span style="color:#8ab3cf; font-weight:normal;">(optional)</span></label>
-                <input type="text" id="firstName" placeholder="Leave blank for random Filipino name">
-                <div class="info-note"><i class="fas fa-dice-d6"></i> Auto-generates if empty</div>
-            </div>
-            <div class="input-group">
-                <label><i class="fas fa-user-tag"></i> Last Name <span style="color:#8ab3cf; font-weight:normal;">(optional)</span></label>
-                <input type="text" id="lastName" placeholder="Leave blank for random surname">
-                <div class="info-note"><i class="fas fa-dice-d6"></i> Auto-generates if empty</div>
-            </div>
-            <div class="input-group">
-                <label><i class="fas fa-venus-mars"></i> Gender</label>
-                <select id="gender">
-                    <option value="M">Male</option>
-                    <option value="F">Female</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label><i class="fas fa-lock"></i> Password <span style="color:#8ab3cf;">(optional)</span></label>
-                <input type="text" id="password" placeholder="Leave blank for strong random password">
-                <div class="info-note">Secure auto-generated if empty</div>
-            </div>
-            <button id="createFbBtn" class="btn-primary"><i class="fab fa-facebook"></i> CREATE FACEBOOK ACCOUNT</button>
-            <div id="createResult" class="result-card" style="display: none;"></div>
+                <div class="form-group">
+                    <label><i class="fas fa-link"></i> Post URL</label>
+                    <input type="text" id="urls" placeholder="https://www.facebook.com/...">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fas fa-chart-simple"></i> Share Limit</label>
+                        <input type="number" id="amounts" min="1" max="10000" placeholder="250" value="100">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-clock"></i> Delay (sec) <span style="color:#ffaa66; font-size:11px;">(Fixed: 2s)</span></label>
+                        <input type="number" id="intervals" min="1" max="2" placeholder="2" value="2" disabled style="opacity:0.7;">
+                        <input type="hidden" id="intervals-hidden" value="2">
+                    </div>
+                </div>
+                <button type="submit" id="submit-button" class="submit-btn"><i class="fas fa-play"></i> <span>Execute Iridescent Boost</span></button>
+                <div id="result" class="result-message"></div>
+            </form>
         </div>
 
-        <!-- RIGHT: Temp Mail + Stats & Accounts -->
-        <div>
-            <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 1.5rem;">
-                <div class="flex-between">
-                    <h3><i class="fas fa-temperature-low"></i> Temp Mail Engine</h3>
-                    <button id="genTempMailBtn" class="btn-secondary"><i class="fas fa-sync-alt"></i> Generate new</button>
+        <div class="tiktok-section">
+            <div class="tiktok-card glass-holo" style="padding: 20px;">
+                <h2 style="margin-bottom: 15px; text-align: center;"><i class="fab fa-tiktok"></i> TikTok Viral Videos</h2>
+                <div class="video-container">
+                    <video id="tiktok-video" controls autoplay loop></video>
                 </div>
-                <div class="input-group" style="margin-top: 1rem;">
-                    <label><i class="far fa-envelope-open"></i> Active Temp Email</label>
-                    <input type="text" id="tempEmailDisplay" readonly placeholder="Click generate">
+                <div class="video-info">
+                    <div class="video-title" id="video-title">Loading...</div>
+                    <div class="video-author" id="video-author"><i class="fab fa-tiktok"></i> Loading...</div>
                 </div>
-                <button id="checkInboxBtn" class="btn-secondary" style="margin-bottom: 0.5rem;"><i class="fas fa-inbox"></i> Check Inbox / Verification</button>
-                <div id="inboxResult" class="result-card" style="max-height: 220px; overflow-y: auto; font-size: 0.75rem; display: none;"></div>
-                <div id="verificationBadge" style="margin-top: 8px;"></div>
-            </div>
-
-            <!-- Stats Cards -->
-            <div class="stats-row">
-                <div class="stat-card"><i class="fas fa-database"></i><div class="stat-number" id="totalAccounts">0</div><span>Total Accounts</span></div>
-                <div class="stat-card"><i class="fas fa-chart-line"></i><div class="stat-number" id="lastHourCount">0</div><span>Last Hour</span></div>
-                <div class="stat-card"><i class="fas fa-hourglass-half"></i><div class="stat-number" id="uptime">0</div><span>Uptime(s)</span></div>
-            </div>
-
-            <div class="glass-panel" style="padding: 1.2rem;">
-                <div class="flex-between"><h4><i class="fas fa-history"></i> Recent Accounts (max 50)</h4> <i class="fas fa-robot" style="color:cyan"></i></div>
-                <div id="accountsList" class="accounts-list" style="margin-top: 0.6rem;">-- loading --</div>
+                <button class="refresh-video" onclick="loadRandomTikTok()">
+                    <i class="fas fa-sync-alt"></i> Next Video
+                </button>
             </div>
         </div>
+    </div>
+
+    <div class="container glass-holo" id="process-container" style="display: none;">
+        <div class="section-header">
+            <h2><i class="fas fa-tasks"></i> Active Sessions</h2>
+            <span class="session-count" id="session-count">0</span>
+        </div>
+        <div id="processing" class="processing-list"></div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card glass-holo" onclick="location.href='/logs.html'">
+            <i class="fas fa-chart-line stat-icon"></i>
+            <div class="stat-info">
+                <h3 id="total-shares">0</h3>
+                <p>Total Shares <i class="fas fa-arrow-right" style="font-size:12px;"></i></p>
+            </div>
+        </div>
+        <div class="stat-card glass-holo" onclick="location.href='/logs.html'">
+            <i class="fas fa-users stat-icon"></i>
+            <div class="stat-info">
+                <h3 id="active-sessions">0</h3>
+                <p>Active Sessions <i class="fas fa-arrow-right" style="font-size:12px;"></i></p>
+            </div>
+        </div>
+        <div class="stat-card glass-holo" onclick="location.href='/logs.html'">
+            <i class="fas fa-check-circle stat-icon"></i>
+            <div class="stat-info">
+                <h3 id="completed-sessions">0</h3>
+                <p>Completed <i class="fas fa-arrow-right" style="font-size:12px;"></i></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-links">
+        <a href="/tutorial.html" class="nav-link"><i class="fas fa-book-open"></i> Tutorial: Get Cookie</a>
+        <a href="/logs.html" class="nav-link"><i class="fas fa-history"></i> Live Logs</a>
+        <a href="/api-docs.html" class="nav-link"><i class="fas fa-code"></i> API Docs</a>
     </div>
 </div>
 
 <script>
-    // Global state
-    let lastTempEmail = null;
-    let createLoading = false;
-
-    // DOM elements
-    const createEmailInput = document.getElementById('createEmail');
-    const tempEmailDisplay = document.getElementById('tempEmailDisplay');
-    const createResultDiv = document.getElementById('createResult');
-    const accountsContainer = document.getElementById('accountsList');
-    const totalAccountsSpan = document.getElementById('totalAccounts');
-    const lastHourSpan = document.getElementById('lastHourCount');
-    const uptimeSpan = document.getElementById('uptime');
-    const inboxResultDiv = document.getElementById('inboxResult');
-
-    // Helper: format uptime
-    function formatUptime(seconds) {
-        if(!seconds) return "0s";
-        const hrs = Math.floor(seconds / 3600);
-        const mins = Math.floor((seconds % 3600) / 60);
-        const secs = Math.floor(seconds % 60);
-        if(hrs>0) return `${hrs}h ${mins}m`;
-        if(mins>0) return `${mins}m ${secs}s`;
-        return `${secs}s`;
-    }
-
-    // Fetch stats and accounts
-    async function refreshStatsAndAccounts() {
+    let refreshInterval = null;
+    
+    async function loadRandomTikTok() {
+        const videoElement = document.getElementById('tiktok-video');
+        const titleElement = document.getElementById('video-title');
+        const authorElement = document.getElementById('video-author');
+        
+        titleElement.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Loading video...';
+        
         try {
-            const statsRes = await fetch('/api/dashboard/stats');
-            const statsData = await statsRes.json();
-            if(statsData.success) {
-                totalAccountsSpan.innerText = statsData.data.totalAccounts || 0;
-                lastHourSpan.innerText = statsData.data.lastHour || 0;
-                uptimeSpan.innerText = formatUptime(statsData.data.uptime || 0);
-            }
-            const accRes = await fetch('/api/accounts/recent');
-            const accData = await accRes.json();
-            if(accData.success && accData.data.length) {
-                const listHtml = accData.data.map(acc => `
-                    <div class="account-item">
-                        <div><i class="fab fa-facebook"></i> <strong>${escapeHtml(acc.firstName || '?')} ${escapeHtml(acc.lastName || '?')}</strong> (${acc.gender === 'M' ? '♂' : '♀'})</div>
-                        <div><i class="fas fa-envelope"></i> ${escapeHtml(acc.email)}</div>
-                        <div><i class="fas fa-key"></i> ${escapeHtml(acc.password)}</div>
-                        <div><i class="fas fa-calendar"></i> ${new Date(acc.createdAt).toLocaleString()}</div>
-                    </div>
-                `).join('');
-                accountsContainer.innerHTML = listHtml;
+            const response = await fetch('/api/tiktok/random');
+            const data = await response.json();
+            
+            if (data.success && data.video) {
+                titleElement.textContent = data.video.title || 'TikTok Viral Video';
+                authorElement.innerHTML = `<i class="fab fa-tiktok"></i> @${data.video.author || 'unknown'} • ${data.video.duration || 0}s`;
+                
+                videoElement.src = data.video.url;
+                videoElement.load();
+                videoElement.play().catch(e => console.log('Autoplay prevented:', e));
             } else {
-                accountsContainer.innerHTML = '<div style="padding:0.5rem; text-align:center;">✨ No accounts yet ✨</div>';
+                throw new Error('Failed to load video');
             }
-        } catch(e) { console.error(e); accountsContainer.innerHTML = '<div>Failed load accounts</div>';}
-    }
-
-    function escapeHtml(str) {
-        if(!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if(m === '&') return '&amp;';
-            if(m === '<') return '&lt;';
-            if(m === '>') return '&gt;';
-            return m;
-        });
-    }
-
-    // generate temp email
-    async function generateTempEmail() {
-        try {
-            const res = await fetch('/api/tempmail/gen');
-            const data = await res.json();
-            if(data.success) {
-                lastTempEmail = data.data.email;
-                tempEmailDisplay.value = lastTempEmail;
-                if(!createEmailInput.value || createEmailInput.value === '') {
-                    createEmailInput.value = lastTempEmail;
-                }
-                inboxResultDiv.style.display = 'block';
-                inboxResultDiv.innerHTML = `<div><i class="fas fa-check-circle" style="color:cyan"></i> New temp mail: ${escapeHtml(lastTempEmail)}<br><small>Expires in ${data.data.expiresIn}</small></div>`;
-                return lastTempEmail;
-            } else throw new Error("gen failed");
-        } catch(e) {
-            console.warn(e);
-            const fallbackMail = `user_${Math.random().toString(36).substring(2,10)}@temp-mail.org`;
-            lastTempEmail = fallbackMail;
-            tempEmailDisplay.value = fallbackMail;
-            if(!createEmailInput.value) createEmailInput.value = fallbackMail;
-            inboxResultDiv.innerHTML = `<div><i class="fas fa-exclamation-triangle"></i> Fallback email: ${escapeHtml(fallbackMail)}</div>`;
-            return fallbackMail;
+        } catch (error) {
+            console.error('Error loading TikTok:', error);
+            titleElement.innerHTML = 'Failed to load video';
+            authorElement.innerHTML = '<i class="fab fa-tiktok"></i> Click refresh to try again';
         }
     }
-
-    // check inbox for verification code
-    async function checkInbox() {
-        if(!lastTempEmail && !tempEmailDisplay.value) {
-            inboxResultDiv.style.display = 'block';
-            inboxResultDiv.innerHTML = '<div>⚠️ No temp email generated yet. Click "Generate new".</div>';
+    
+    async function submitForm(event) {
+        event.preventDefault();
+        const resultDiv = document.getElementById('result');
+        const button = document.getElementById('submit-button');
+        const cookies = document.getElementById('cookies').value.trim();
+        const url = document.getElementById('urls').value.trim();
+        const amount = document.getElementById('amounts').value;
+        const interval = 2; // Force to 2 seconds
+        
+        if (!cookies || !url || !amount) {
+            showResult('⛔ All fields required', 'error');
             return;
         }
-        const emailToCheck = lastTempEmail || tempEmailDisplay.value;
-        if(!emailToCheck) return;
-        inboxResultDiv.style.display = 'block';
-        inboxResultDiv.innerHTML = '<div class="spinner" style="margin:0 auto;"></div> Fetching inbox...';
-        try {
-            const res = await fetch(`/api/tempmail/inbox?email=${encodeURIComponent(emailToCheck)}`);
-            const data = await res.json();
-            if(data.success) {
-                const msgs = data.data.messages || [];
-                const verification = data.data.verification || {};
-                let inboxHtml = `<div><i class="fas fa-inbox"></i> Messages: ${msgs.length}</div>`;
-                if(msgs.length === 0) inboxHtml += `<div><small>No emails yet. Wait for Facebook confirmation.</small></div>`;
-                else {
-                    inboxHtml += `<ul style="margin-top:6px; list-style:none;">`;
-                    msgs.slice(0,4).forEach(msg => {
-                        const subject = msg.subject || 'No subject';
-                        let preview = msg.body_text ? msg.body_text.substring(0, 120) : (msg.body_html ? msg.body_html.replace(/<[^>]*>/g, '').substring(0,120) : 'No preview');
-                        inboxHtml += `<li style="border-bottom:1px solid #1f4060; padding:5px 0;"><b>📩 ${escapeHtml(subject)}</b><br><span style="font-size:0.65rem;">${escapeHtml(preview)}</span></li>`;
-                    });
-                    inboxHtml += `</ul>`;
-                }
-                if(verification.code) {
-                    inboxHtml += `<div style="margin-top:8px; background:#0a2a3a; padding:8px; border-radius:12px;"><i class="fas fa-check-circle" style="color:#0f0;"></i> <strong>VERIFICATION CODE:</strong> ${verification.code}<br><i class="fas fa-link"></i> <a href="${verification.link || '#'}" target="_blank" style="color:cyan;">${verification.link ? 'Click to verify' : 'Link not extracted yet'}</a></div>`;
-                } else {
-                    inboxHtml += `<div><i class="fas fa-clock"></i> No verification code detected yet (wait 10-20 sec).</div>`;
-                }
-                inboxResultDiv.innerHTML = inboxHtml;
-            } else {
-                inboxResultDiv.innerHTML = `<div>❌ Could not fetch: ${data.error}</div>`;
-            }
-        } catch(err) {
-            inboxResultDiv.innerHTML = `<div>Error checking inbox: ${err.message}</div>`;
-        }
-    }
-
-    // create Facebook account (optional names allowed)
-    async function createFacebookAccount() {
-        if(createLoading) return;
-        let email = createEmailInput.value.trim();
-        if(!email) {
-            createResultDiv.style.display = 'block';
-            createResultDiv.innerHTML = '<div class="error-msg"><i class="fas fa-ban"></i> Email is required</div>';
+        
+        if (amount < 1 || amount > 10000) {
+            showResult('⛔ Amount must be between 1 and 10000', 'error');
             return;
         }
-        let firstName = document.getElementById('firstName').value.trim();
-        let lastName = document.getElementById('lastName').value.trim();
-        const gender = document.getElementById('gender').value;
-        let password = document.getElementById('password').value.trim();
-        if(password === "") password = undefined;
-
-        // if first or last name empty, backend will auto-generate, but we can send as null/undefined
-        const payload = {
-            email: email,
-            gender: gender,
-            ...(firstName && { firstName }),
-            ...(lastName && { lastName }),
-            ...(password && { password })
-        };
-
-        createLoading = true;
-        createResultDiv.style.display = 'block';
-        createResultDiv.innerHTML = '<div class="spinner"></div> Creating Facebook account...';
+        
         try {
-            const res = await fetch('/api/fbcreate', {
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Launching Engine...';
+            const response = await fetch('/api/submit', {
                 method: 'POST',
+                body: JSON.stringify({ 
+                    cookie: cookies, 
+                    url: url, 
+                    amount: parseInt(amount), 
+                    interval: interval 
+                }),
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
             });
-            const data = await res.json();
-            if(data.success) {
-                const acc = data.data;
-                createResultDiv.innerHTML = `
-                    <div><i class="fab fa-facebook" style="color:#0af;"></i> ✅ ACCOUNT CREATED!</div>
-                    <div><i class="fas fa-envelope"></i> ${escapeHtml(acc.email)}</div>
-                    <div><i class="fas fa-key"></i> ${escapeHtml(acc.password)}</div>
-                    <div><i class="fas fa-user-circle"></i> ${escapeHtml(acc.firstName)} ${escapeHtml(acc.lastName)}</div>
-                    <div><i class="fas fa-id-card"></i> UserID: ${escapeHtml(acc.userId)}</div>
-                    <div><i class="fas fa-external-link-alt"></i> <a href="${acc.profileLink}" target="_blank" style="color:cyan;">View Profile</a></div>
-                    <small>✨ Created at: ${new Date(acc.createdAt).toLocaleString()}</small>
-                `;
-                refreshStatsAndAccounts();
-                if(lastTempEmail && lastTempEmail === email) {
-                    setTimeout(() => checkInbox(), 2000);
-                }
+            const data = await response.json();
+            if (data.success) {
+                showResult('✓ Session activated! 2-second delay enforced.', 'success');
+                document.getElementById('cookies').value = '';
+                document.getElementById('urls').value = '';
+                document.getElementById('amounts').value = '100';
+                await loadProcessing();
             } else {
-                createResultDiv.innerHTML = `<div class="error-msg"><i class="fas fa-times-circle"></i> ${escapeHtml(data.error || 'Facebook registration failed')}</div>`;
+                showResult('⚠️ Error: ' + (data.error || 'unknown failure'), 'error');
             }
-        } catch(err) {
-            createResultDiv.innerHTML = `<div class="error-msg">Network error: ${err.message}</div>`;
-        } finally { createLoading = false; }
-    }
-
-    // Fill creation email with latest temp mail
-    function fillWithTempEmail() {
-        if(lastTempEmail) {
-            createEmailInput.value = lastTempEmail;
-        } else if(tempEmailDisplay.value) {
-            createEmailInput.value = tempEmailDisplay.value;
-        } else {
-            generateTempEmail().then(() => {
-                createEmailInput.value = lastTempEmail;
-            });
+        } catch (e) {
+            showResult('❌ Network error: ' + e.message, 'error');
+        } finally {
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-play"></i> <span>Execute Iridescent Boost</span>';
         }
     }
-
-    // initializers
-    async function init() {
-        await refreshStatsAndAccounts();
-        await generateTempEmail();  // auto generate one temp mail on load
-        // Optional: placeholders for UX
-        if(!document.getElementById('firstName').value) document.getElementById('firstName').placeholder = "Random Filipino name";
-        if(!document.getElementById('lastName').value) document.getElementById('lastName').placeholder = "Random surname";
+    
+    function showResult(message, type) {
+        const resultEl = document.getElementById('result');
+        resultEl.textContent = message;
+        resultEl.className = `result-message ${type}`;
+        setTimeout(() => { resultEl.className = 'result-message'; resultEl.style.display = 'none'; }, 4800);
     }
-
-    document.getElementById('createFbBtn').addEventListener('click', createFacebookAccount);
-    document.getElementById('genTempMailBtn').addEventListener('click', generateTempEmail);
-    document.getElementById('checkInboxBtn').addEventListener('click', checkInbox);
-    document.getElementById('fillTempMailBtn').addEventListener('click', fillWithTempEmail);
-
-    init();
-    setInterval(() => {
-        refreshStatsAndAccounts();
-    }, 18000);
+    
+    function extractPostId(url) {
+        if (!url) return 'Unknown';
+        const match = url.match(/\/posts\/(\d+)/) || url.match(/story\.php\?story_fbid=(\d+)/);
+        return match ? `Post ID: ${match[1]}` : url.split('/').pop();
+    }
+    
+    async function loadProcessing() {
+        try {
+            const response = await fetch('/api/total');
+            if (!response.ok) throw new Error('fetch failed');
+            const data = await response.json();
+            const container = document.getElementById('processing');
+            const processContainer = document.getElementById('process-container');
+            
+            // Update stats from /api/total
+            let totalShares = 0, activeSessions = 0, completedSessions = 0;
+            
+            if (data.sessions && data.sessions.length > 0) {
+                processContainer.style.display = 'block';
+                container.innerHTML = '';
+                
+                data.sessions.forEach(session => {
+                    totalShares += session.sharedCount || 0;
+                    if (session.status === 'running') activeSessions++;
+                    if (session.status === 'completed') completedSessions++;
+                    const card = createProcessCard(session);
+                    container.appendChild(card);
+                });
+            } else {
+                processContainer.style.display = 'none';
+            }
+            
+            document.getElementById('total-shares').textContent = totalShares;
+            document.getElementById('active-sessions').textContent = activeSessions;
+            document.getElementById('completed-sessions').textContent = completedSessions;
+            document.getElementById('session-count').textContent = data.activeSessions || activeSessions;
+        } catch (error) { 
+            console.error('error loading logs:', error);
+        }
+    }
+    
+    function createProcessCard(session) {
+        const card = document.createElement('div');
+        card.className = 'process-card';
+        const percent = Math.min(100, ((session.sharedCount || 0) / (session.targetAmount || 1)) * 100);
+        const displayInfo = extractPostId(session.url);
+        
+        card.innerHTML = `<div class="process-info">
+            <div class="process-url"><i class="fas fa-hashtag"></i> ${displayInfo}</div>
+            <div class="process-progress">
+                <div class="progress-bar"><div class="progress-fill" style="width: ${percent}%"></div></div>
+                <span style="color:#fff;">${percent.toFixed(1)}%</span>
+            </div>
+        </div>
+        <div class="process-stats">
+            <span class="stat-badge"><i class="fas fa-chart-simple"></i> ${session.sharedCount || 0}/${session.targetAmount || 0}</span>
+            <span class="status-badge status-${session.status === 'running' ? 'running' : 'completed'}">
+                <i class="fas ${session.status === 'running' ? 'fa-sync-alt fa-spin' : 'fa-check-circle'}"></i> 
+                ${session.status === 'running' ? 'PROCESSING' : 'DONE'}
+            </span>
+        </div>`;
+        return card;
+    }
+    
+    // Initial load
+    loadRandomTikTok();
+    if (refreshInterval) clearInterval(refreshInterval);
+    refreshInterval = setInterval(loadProcessing, 2100);
+    loadProcessing();
 </script>
 </body>
 </html>

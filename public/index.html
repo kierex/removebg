@@ -1,4 +1,4 @@
-<!-- dashboard.html - Fixed with video controls (play/pause, mute/unmute, volume, progress bar) -->
+<!-- dashboard.html - Fixed border style and proper next video fetch -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -71,7 +71,7 @@
         .result-message.error { background: rgba(255, 70, 130, 0.2); border: 1px solid #ff6e8b; color: #ffbcbc; display: block; }
         @keyframes fadeSlide { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Custom Video Player with Controls */
+        /* TikTok Video Section - Fixed Border */
         .tiktok-section {
             margin-bottom: 28px;
             display: flex;
@@ -80,12 +80,9 @@
             align-items: center;
         }
         .video-container {
-            background: rgba(0,0,0,0.5);
+            background: linear-gradient(135deg, rgba(255,110,199,0.3), rgba(120,115,245,0.3), rgba(59,201,219,0.3));
             border-radius: 32px;
-            padding: 16px;
-            border: 3px solid transparent;
-            border-image: linear-gradient(135deg, #ff6ec7, #7873f5, #3bc9db);
-            border-image-slice: 1;
+            padding: 4px;
             box-shadow: 0 0 25px rgba(120, 115, 245, 0.4);
             transition: all 0.3s ease;
             margin-bottom: 16px;
@@ -93,14 +90,17 @@
         }
         .video-container:hover {
             transform: scale(1.01);
-            box-shadow: 0 0 35px rgba(255, 110, 199, 0.5);
-            border-image: linear-gradient(135deg, #ffb347, #ff6ec7, #7873f5);
-            border-image-slice: 1;
+            box-shadow: 0 0 35px rgba(255, 110, 199, 0.6);
+            background: linear-gradient(135deg, #ff6ec7, #7873f5, #3bc9db);
+        }
+        .video-inner {
+            background: #000;
+            border-radius: 28px;
+            overflow: hidden;
+            position: relative;
         }
         .video-wrapper {
             position: relative;
-            border-radius: 24px;
-            overflow: hidden;
         }
         .tiktok-video {
             width: 100%;
@@ -112,13 +112,13 @@
             cursor: pointer;
         }
         
-        /* Custom Controls Overlay */
+        /* Custom Video Controls */
         .video-controls {
             position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.4), transparent);
+            background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.5), transparent);
             padding: 12px 16px;
             opacity: 0;
             transition: opacity 0.3s ease;
@@ -216,16 +216,34 @@
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(197, 90, 255, 0.5);
         }
+        .next-video-btn:active {
+            transform: translateY(1px);
+        }
         
         .nav-links { display: flex; gap: 20px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
         .nav-link { color: #c5b3ff; text-decoration: none; padding: 8px 20px; border-radius: 30px; background: rgba(255,255,255,0.1); transition: 0.2s; }
         .nav-link:hover { background: rgba(255,255,255,0.2); color: white; }
         
+        /* Loading indicator */
+        .video-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            z-index: 10;
+            background: rgba(0,0,0,0.6);
+            padding: 10px 20px;
+            border-radius: 40px;
+            display: none;
+        }
+        
         @media (max-width: 760px) { 
             .form-row { grid-template-columns: 1fr; gap: 12px; } 
             .container, .form-wrapper { padding: 24px; } 
             h1 { font-size: 38px; }
-            .video-container { padding: 10px; }
+            .video-container { padding: 3px; }
             .controls-row { gap: 8px; }
             .control-btn { width: 30px; height: 30px; font-size: 12px; }
             .volume-slider { width: 40px; }
@@ -250,25 +268,30 @@
     <!-- TikTok Video Section with Custom Controls -->
     <div class="tiktok-section">
         <div class="video-container">
-            <div class="video-wrapper">
-                <video id="tiktokVideoPlayer" class="tiktok-video" preload="metadata">
-                    <source src="" type="video/mp4">
-                </video>
-                <div class="video-controls">
-                    <div class="controls-row">
-                        <button class="control-btn" id="playPauseBtn">
-                            <i class="fas fa-play"></i>
-                        </button>
-                        <div class="progress-container">
-                            <div class="progress-bar" id="progressBar">
-                                <div class="progress-fill" id="progressFill"></div>
+            <div class="video-inner">
+                <div class="video-wrapper">
+                    <video id="tiktokVideoPlayer" class="tiktok-video" preload="metadata">
+                        <source src="" type="video/mp4">
+                    </video>
+                    <div class="video-loading" id="videoLoading">
+                        <i class="fas fa-spinner fa-pulse"></i> Loading...
+                    </div>
+                    <div class="video-controls">
+                        <div class="controls-row">
+                            <button class="control-btn" id="playPauseBtn">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <div class="progress-container">
+                                <div class="progress-bar" id="progressBar">
+                                    <div class="progress-fill" id="progressFill"></div>
+                                </div>
+                                <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
                             </div>
-                            <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
+                            <button class="control-btn" id="muteBtn">
+                                <i class="fas fa-volume-up"></i>
+                            </button>
+                            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.01" value="1">
                         </div>
-                        <button class="control-btn" id="muteBtn">
-                            <i class="fas fa-volume-up"></i>
-                        </button>
-                        <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.01" value="1">
                     </div>
                 </div>
             </div>
@@ -330,12 +353,14 @@
     const muteBtn = document.getElementById('muteBtn');
     const volumeSlider = document.getElementById('volumeSlider');
     const nextVideoBtn = document.getElementById('nextVideoBtn');
+    const videoLoading = document.getElementById('videoLoading');
     
     let isDraggingProgress = false;
+    let currentVideoUrl = '';
     
     // Format time (seconds to MM:SS)
     function formatTime(seconds) {
-        if (isNaN(seconds)) return "0:00";
+        if (isNaN(seconds) || !isFinite(seconds)) return "0:00";
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -343,7 +368,7 @@
     
     // Update progress bar and time display
     function updateProgress() {
-        if (!isDraggingProgress && video.duration) {
+        if (!isDraggingProgress && video.duration && isFinite(video.duration)) {
             const percent = (video.currentTime / video.duration) * 100;
             progressFill.style.width = `${percent}%`;
             timeDisplay.textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
@@ -372,8 +397,8 @@
     // Seek to position
     function seekTo(e) {
         const rect = progressBar.getBoundingClientRect();
-        const pos = (e.clientX - rect.left) / rect.width;
-        if (video.duration) {
+        const pos = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+        if (video.duration && isFinite(video.duration)) {
             video.currentTime = pos * video.duration;
         }
     }
@@ -395,32 +420,92 @@
         }
     }
     
-    // Load new video
+    // Load new video - ensures fresh video each time
     async function loadTikTokVideo() {
-        const currentSrc = video.querySelector('source').src;
+        // Show loading indicator
+        videoLoading.style.display = 'flex';
+        
+        // Remember if video was playing
+        const wasPlaying = !video.paused;
         
         try {
-            const response = await fetch('/api/tiktok/random');
+            // Add cache buster to prevent repeated videos
+            const cacheBuster = Date.now();
+            const response = await fetch(`/api/tiktok/random?t=${cacheBuster}`, {
+                cache: 'no-store',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache'
+                }
+            });
             const data = await response.json();
+            
             if (data.success && data.video && data.video.url) {
-                // Store current playback state
-                const wasPlaying = !video.paused;
+                const newUrl = data.video.url;
                 
-                // Load new video
-                video.querySelector('source').src = data.video.url;
-                video.load();
-                
-                // Wait for metadata to load
-                video.addEventListener('loadedmetadata', () => {
-                    if (wasPlaying) {
-                        video.play().catch(e => console.log('autoplay blocked', e));
+                // Check if it's the same video
+                if (newUrl === currentVideoUrl) {
+                    console.log('Same video, fetching again...');
+                    // Try one more time
+                    const retryResponse = await fetch(`/api/tiktok/random?t=${Date.now() + 100}`, {
+                        cache: 'no-store'
+                    });
+                    const retryData = await retryResponse.json();
+                    if (retryData.success && retryData.video && retryData.video.url && retryData.video.url !== currentVideoUrl) {
+                        loadVideoToPlayer(retryData.video.url, wasPlaying);
+                    } else {
+                        // Still same, just load it anyway
+                        loadVideoToPlayer(newUrl, wasPlaying);
                     }
-                    updatePlayPauseIcon();
-                }, { once: true });
+                } else {
+                    loadVideoToPlayer(newUrl, wasPlaying);
+                }
+            } else {
+                console.error('No video URL received');
+                videoLoading.style.display = 'none';
             }
         } catch (err) {
             console.error('TikTok fetch error:', err);
+            videoLoading.style.display = 'none';
         }
+    }
+    
+    function loadVideoToPlayer(videoUrl, wasPlaying) {
+        currentVideoUrl = videoUrl;
+        const sourceEl = video.querySelector('source');
+        sourceEl.src = videoUrl;
+        
+        // Clear any existing timeout
+        if (window.videoLoadTimeout) clearTimeout(window.videoLoadTimeout);
+        
+        video.load();
+        
+        // Hide loading when metadata loaded or after timeout
+        const hideLoading = () => {
+            videoLoading.style.display = 'none';
+            video.removeEventListener('loadedmetadata', hideLoading);
+            video.removeEventListener('error', hideLoading);
+        };
+        
+        video.addEventListener('loadedmetadata', hideLoading, { once: true });
+        video.addEventListener('error', hideLoading, { once: true });
+        
+        // Fallback timeout
+        window.videoLoadTimeout = setTimeout(() => {
+            videoLoading.style.display = 'none';
+        }, 5000);
+        
+        // Auto-play if it was playing before
+        video.addEventListener('canplay', () => {
+            if (wasPlaying) {
+                video.play().catch(e => console.log('Autoplay blocked:', e));
+            }
+            updatePlayPauseIcon();
+        }, { once: true });
+        
+        // Reset progress display
+        progressFill.style.width = '0%';
+        timeDisplay.textContent = '0:00 / 0:00';
     }
     
     // Event listeners
@@ -430,7 +515,9 @@
     video.addEventListener('pause', updatePlayPauseIcon);
     video.addEventListener('timeupdate', updateProgress);
     video.addEventListener('loadedmetadata', () => {
-        timeDisplay.textContent = `0:00 / ${formatTime(video.duration)}`;
+        if (video.duration && isFinite(video.duration)) {
+            timeDisplay.textContent = `0:00 / ${formatTime(video.duration)}`;
+        }
         progressFill.style.width = '0%';
     });
     
@@ -452,17 +539,10 @@
     muteBtn.addEventListener('click', toggleMute);
     volumeSlider.addEventListener('input', updateVolume);
     
-    // Next video
+    // Next video - force fresh fetch
     nextVideoBtn.addEventListener('click', () => {
         loadTikTokVideo();
     });
-    
-    // Auto-refresh video every 50 seconds (but only if not playing)
-    setInterval(() => {
-        if (video.paused) {
-            loadTikTokVideo();
-        }
-    }, 50000);
     
     // Submit form function
     async function submitForm(event) {
@@ -513,12 +593,12 @@
     // Initial video load
     loadTikTokVideo();
     
-    // Enable autoplay with sound (respect user interaction)
-    document.body.addEventListener('click', () => {
-        if (video.paused && video.readyState >= 2) {
-            video.play().catch(e => console.log('autoplay on click blocked', e));
+    // Refresh video every 60 seconds (only if paused)
+    setInterval(() => {
+        if (video.paused) {
+            loadTikTokVideo();
         }
-    }, { once: true });
+    }, 60000);
 </script>
 </body>
 </html>

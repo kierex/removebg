@@ -1,530 +1,743 @@
 const express = require('express');
 const axios = require('axios');
-const crypto = require('crypto');
-const cors = require('cors');
-const helmet = require('helmet');
-const NodeCache = require('node-cache');
-const os = require('os');
 const path = require('path');
+const bodyParser = require('body-parser');
+const fs = require('fs').promises;
+const crypto = require('crypto');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-// ==================== CONFIGURATION ====================
-const config = {
-  facebook: {
-    api_key: "882a8490361da98702bf97a021ddc14d",
-    secret: "62f8ce9f74b12f84c123cc23437a4a32"
-  },
-  rateLimit: {
-    windowMs: 60 * 1000, // 1 minute
-    maxAccounts: 5, // max 5 accounts per minute
-    maxEmailGen: 30 // max 30 email generations per minute
-  }
-};
-
-// ==================== CACHE SETUP ====================
-const accountCache = new NodeCache({ stdTTL: 3600, checkperiod: 600 });
-const emailCache = new NodeCache({ stdTTL: 1800, checkperiod: 300 });
-const rateLimitCache = new NodeCache({ stdTTL: 60, checkperiod: 30 });
-
-// ==================== MIDDLEWARE ====================
-app.use(helmet({
-  contentSecurityPolicy: false,
-}));
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
 app.use(express.json());
+app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ==================== RATE LIMITING MIDDLEWARE ====================
-function rateLimiter(type) {
-  return (req, res, next) => {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    const key = `${type}_${ip}`;
-    const current = rateLimitCache.get(key) || 0;
+// Enhanced data structures
+const total = new Map();
+const activeTimers = new Map();
+const requestQueue = new Map();
+const rateLimiter = new Map();
+const sessionLogs = new Map();
 
-    const max = type === 'account' ? config.rateLimit.maxAccounts : config.rateLimit.maxEmailGen;
+// TikTok video cache
+let tiktokVideoCache = null;
+let lastTikTokFetch = 0;
+const TIKTOK_CACHE_DURATION = 60000; // 1 minute cache
 
-    if (current >= max) {
-      return res.status(429).json({
-        success: false,
-        error: 'Too many requests. Please wait a moment.',
-        retryAfter: 60
-      });
+// Configuration
+const CONFIG = {
+    MAX_CONCURRENT_SESSIONS: 5, // This value is now ignored (removed limit)
+    RATE_LIMIT_WINDOW: 60000, // 1 minute
+    MAX_REQUESTS_PER_WINDOW: 30,
+    REQUEST_TIMEOUT: 30000,
+    RETRY_ATTEMPTS: 3,
+    RETRY_DELAY: 2000,
+    LOG_RETENTION_DAYS: 7
+};
+
+// Enhanced logging
+class Logger {
+    static async log(sessionId, action, data) {
+        const logEntry = {
+            timestamp: new Date().toISOString(),
+            sessionId,
+            action,
+            data
+        };
+
+        if (!sessionLogs.has(sessionId)) {
+            sessionLogs.set(sessionId, []);
+        }
+        sessionLogs.get(sessionId).push(logEntry);
+
+        // Auto cleanup old logs (keep last 1000 per session)
+        if (sessionLogs.get(sessionId).length > 1000) {
+            sessionLogs.set(sessionId, sessionLogs.get(sessionId).slice(-500));
+        }
+
+        if (sessionLogs.get(sessionId).length % 10 === 0) {
+            await this.saveToFile(sessionId);
+        }
     }
 
-    rateLimitCache.set(key, current + 1);
-    next();
-  };
+    static async saveToFile(sessionId) {
+        const logs = sessionLogs.get(sessionId);
+        if (!logs) return;
+
+        const filename = `logs/session_${sessionId}_${Date.now()}.json`;
+        try {
+            await fs.mkdir('logs', { recursive: true });
+            await fs.writeFile(filename, JSON.stringify(logs, null, 2));
+        } catch (error) {
+            console.error('Failed to save logs:', error);
+        }
+    }
+
+    static getLogs(sessionId) {
+        return sessionLogs.get(sessionId) || [];
+    }
 }
 
-// ==================== UTILITY FUNCTIONS ====================
-const utils = {
-  generateRandomString(length) {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-  },
+// Rate limiter
+class RateLimiter {
+    static checkLimit(sessionId) {
+        const now = Date.now();
+        const sessionLimit = rateLimiter.get(sessionId);
 
-  generateRandomPassword(length = 12) {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
-    let password = "";
-    for (let i = 0; i < length; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
+        if (!sessionLimit) {
+            rateLimiter.set(sessionId, {
+                count: 1,
+                resetTime: now + CONFIG.RATE_LIMIT_WINDOW
+            });
+            return true;
+        }
+
+        if (now > sessionLimit.resetTime) {
+            rateLimiter.set(sessionId, {
+                count: 1,
+                resetTime: now + CONFIG.RATE_LIMIT_WINDOW
+            });
+            return true;
+        }
+
+        if (sessionLimit.count >= CONFIG.MAX_REQUESTS_PER_WINDOW) {
+            return false;
+        }
+
+        sessionLimit.count++;
+        return true;
     }
-    return password;
-  },
+}
 
-  getRandomDate(start = new Date(1976, 0, 1), end = new Date(2004, 0, 1)) {
-    return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-  },
+// TikTok API integration
+async function fetchRandomTikTok() {
+    try {
+        const response = await axios.get('https://betadash-shoti-yazky.vercel.app/shotizxx?apikey=shipazu', {
+            timeout: 10000
+        });
+        
+        if (response.data && response.data.shotiurl) {
+            return {
+                success: true,
+                video: {
+                    url: response.data.shotiurl,
+                    title: response.data.title || 'No title',
+                    author: response.data.username || 'unknown',
+                    nickname: response.data.nickname || 'User',
+                    duration: response.data.duration || 0,
+                    cover: response.data.cover || response.data.cover_image,
+                    region: response.data.region || 'Unknown'
+                }
+            };
+        }
+        throw new Error('Invalid response from TikTok API');
+    } catch (error) {
+        console.error('TikTok API error:', error.message);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
 
-  filipinoFirstNames: [
-    "Jake", "John", "Mark", "Michael", "Ryan", "Arvin", "Kevin", "Ian", "Carlo", "Jeffrey",
-    "Joshua", "Bryan", "Jericho", "Christian", "Vincent", "Angelo", "Francis", "Patrick",
-    "Emmanuel", "Gerald", "Marvin", "Ronald", "Albert", "Roderick", "Raymart", "Jay-ar",
-    "Maria", "Ana", "Lisa", "Jennifer", "Christine", "Catherine", "Jocelyn", "Marilyn",
-    "Angel", "Princess", "Mary Joy", "Rose Ann", "Liezl", "Aileen", "Darlene", "Shiela"
-  ],
+// Enhanced endpoints
+app.get('/api/total', (req, res) => {
+    try {
+        const data = Array.from(total.values()).map((session, index) => ({
+            sessionId: session.sessionId,
+            sessionNumber: index + 1,
+            url: session.url,
+            sharedCount: session.count,
+            targetAmount: session.target,
+            postId: session.postId,
+            status: session.status,
+            progress: ((session.count / session.target) * 100).toFixed(2),
+            startTime: session.startTime,
+            estimatedCompletion: session.estimatedCompletion,
+            error: session.error || null
+        }));
 
-  filipinoSurnames: [
-    "Dela Cruz", "Santos", "Reyes", "Garcia", "Mendoza", "Flores", "Gonzales", "Lopez",
-    "Cruz", "Perez", "Fernandez", "Villanueva", "Ramos", "Aquino", "Castro", "Rivera",
-    "Bautista", "Martinez", "De Guzman", "Francisco", "Alvarez", "Domingo", "Mercado",
-    "Torres", "Gutierrez", "Ramirez", "Delos Santos", "Tolentino", "Javier", "Hernandez"
-  ],
+        res.json({
+            success: true,
+            activeSessions: total.size,
+            sessions: data,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Error in /api/total:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch session data'
+        });
+    }
+});
 
-  getRandomName() {
-    return {
-      firstName: this.filipinoFirstNames[Math.floor(Math.random() * this.filipinoFirstNames.length)],
-      lastName: this.filipinoSurnames[Math.floor(Math.random() * this.filipinoSurnames.length)]
+// TikTok endpoint
+app.get('/api/tiktok/random', async (req, res) => {
+    try {
+        // Check cache
+        const now = Date.now();
+        if (tiktokVideoCache && (now - lastTikTokFetch) < TIKTOK_CACHE_DURATION) {
+            return res.json(tiktokVideoCache);
+        }
+        
+        const result = await fetchRandomTikTok();
+        if (result.success) {
+            tiktokVideoCache = result;
+            lastTikTokFetch = now;
+            res.json(result);
+        } else {
+            // Return fallback video if API fails
+            res.json({
+                success: true,
+                video: {
+                    url: "https://v16m.tiktokcdn-us.com/5df5e84d2402e0ba15dfa7680934a925/6a1af973/video/tos/alisg/tos-alisg-pve-0037c001/ogfjIIpt4fwX0siphQCyEjV6APFvDOAeUbDgbE/?a=1233&bti=OUBzOTg7QGo6OjZAL3AjLTAzYCMxNDNg&&bt=1105&ft=kLx3-yt4ZZo0PDFqad3aQ9ATU~j6JE.C~&mime_type=video_mp4&rc=ODM3OGc0ZzM6ODM7ZmllZkBpMzRvcnk5cnZ4djMzODczNEBfYzYwX15eNmExMGEwLzJiYSNwa2ZqMmQ0aGhgLS1kMS1zcw%3D%3D&vvpl=1&l=2026053008512459F084F3864AA74F0D80&btag=e000f0000",
+                    title: "TikTok Viral Video",
+                    author: "trending",
+                    nickname: "Trending",
+                    duration: 15,
+                    region: "US"
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error in /api/tiktok/random:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch TikTok video'
+        });
+    }
+});
+
+app.get('/api/session/:sessionId/logs', (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const logs = Logger.getLogs(sessionId);
+        
+        // Format logs for display
+        const formattedLogs = logs.map(log => ({
+            timestamp: log.timestamp,
+            action: log.action,
+            data: log.data,
+            sessionId: log.sessionId
+        }));
+        
+        res.json({
+            success: true,
+            sessionId,
+            logs: formattedLogs,
+            totalLogs: formattedLogs.length
+        });
+    } catch (error) {
+        console.error('Error fetching logs:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch session logs'
+        });
+    }
+});
+
+// Get all sessions summary for logs page
+app.get('/api/sessions/summary', (req, res) => {
+    try {
+        const sessions = Array.from(total.values()).map(session => ({
+            sessionId: session.sessionId,
+            postId: session.postId,
+            status: session.status,
+            sharedCount: session.count,
+            targetAmount: session.target,
+            url: session.url,
+            startTime: session.startTime
+        }));
+        
+        // Calculate totals
+        let totalShares = 0;
+        let activeSessions = 0;
+        let completedSessions = 0;
+        
+        sessions.forEach(session => {
+            totalShares += session.sharedCount || 0;
+            if (session.status === 'running') activeSessions++;
+            if (session.status === 'completed') completedSessions++;
+        });
+        
+        res.json({
+            success: true,
+            sessions,
+            totals: {
+                totalShares,
+                activeSessions,
+                completedSessions,
+                totalSessions: sessions.length
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching sessions summary:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch sessions summary'
+        });
+    }
+});
+
+app.delete('/api/session/:sessionId', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+
+        if (!total.has(sessionId)) {
+            return res.status(404).json({
+                success: false,
+                error: 'Session not found'
+            });
+        }
+
+        await stopSharing(sessionId);
+        total.delete(sessionId);
+
+        res.json({
+            success: true,
+            message: 'Session stopped successfully'
+        });
+    } catch (error) {
+        console.error('Error stopping session:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to stop session'
+        });
+    }
+});
+
+app.post('/api/submit', async (req, res) => {
+    try {
+        const {
+            cookie,
+            url,
+            amount,
+            interval,
+            sessionId: providedSessionId
+        } = req.body;
+
+        if (!cookie || !url || !amount || !interval) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields: cookie, url, amount, or interval'
+            });
+        }
+
+        if (amount < 1 || amount > 10000) {
+            return res.status(400).json({
+                success: false,
+                error: 'Amount must be between 1 and 10000'
+            });
+        }
+
+        // Force interval to always be 2 seconds
+        const forcedInterval = 2;
+        
+        if (interval !== 2) {
+            console.log(`Interval changed from ${interval} to 2 seconds (forced)`);
+        }
+
+        // REMOVED: Maximum concurrent sessions check
+        // Now unlimited sessions allowed
+
+        const cookies = await convertCookie(cookie);
+        if (!cookies) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid cookies format'
+            });
+        }
+
+        const sessionId = providedSessionId || crypto.randomBytes(16).toString('hex');
+        const result = await share(cookies, url, amount, forcedInterval, sessionId);
+
+        res.json({
+            success: true,
+            sessionId: result.sessionId,
+            message: 'Sharing started successfully (2 second delay enforced)',
+            estimatedCompletion: result.estimatedCompletion
+        });
+    } catch (err) {
+        console.error('Error in /api/submit:', err);
+        return res.status(500).json({
+            success: false,
+            error: err.message || 'Internal server error'
+        });
+    }
+});
+
+async function share(cookies, url, amount, interval, sessionId) {
+    const id = await getPostID(url);
+    if (!id) {
+        throw new Error("Unable to get post ID: Invalid URL, private post, or friends-only visibility");
+    }
+
+    const accessToken = await getAccessToken(cookies);
+    if (!accessToken) {
+        throw new Error("Unable to get access token: Invalid cookies or session expired");
+    }
+
+    const startTime = Date.now();
+    const estimatedCompletion = new Date(startTime + (amount * interval * 1000));
+
+    const sessionData = {
+        sessionId,
+        url,
+        postId: id,
+        count: 0,
+        target: amount,
+        status: 'running',
+        startTime: new Date().toISOString(),
+        estimatedCompletion: estimatedCompletion.toISOString(),
+        error: null,
+        cookies,
+        accessToken,
+        interval,
+        sharedCount: 0
     };
-  }
-};
 
-// ==================== FACEBOOK CREATION FUNCTIONS ====================
-const facebook = {
-  async createAccount(options = {}) {
-    try {
-      // Use provided name or generate random Filipino name
-      let { firstName, lastName } = options;
-      
-      if (!firstName || firstName.trim() === '') {
-        firstName = utils.getRandomName().firstName;
-      }
-      if (!lastName || lastName.trim() === '') {
-        lastName = utils.getRandomName().lastName;
-      }
-      
-      const {
-        email,
-        password = utils.generateRandomPassword(12),
-        gender = Math.random() < 0.5 ? "M" : "F",
-        birthday = utils.getRandomDate()
-      } = options;
+    total.set(sessionId, sessionData);
+    await Logger.log(sessionId, 'session_started', { url, amount, interval, postId: id });
 
-      if (!email) {
-        throw new Error('Email is required');
-      }
+    let sharedCount = 0;
+    let consecutiveErrors = 0;
 
-      const birthYear = birthday.getFullYear();
-      const birthMonth = String(birthday.getMonth() + 1).padStart(2, '0');
-      const birthDay = String(birthday.getDate()).padStart(2, '0');
-      const formattedBirthday = `${birthYear}-${birthMonth}-${birthDay}`;
-
-      const req = {
-        api_key: config.facebook.api_key,
-        attempt_login: true,
-        birthday: formattedBirthday,
-        client_country_code: "EN",
-        fb_api_caller_class: "com.facebook.registration.protocol.RegisterAccountMethod",
-        fb_api_req_friendly_name: "registerAccount",
-        firstname: firstName,
-        format: "json",
-        gender: gender,
-        lastname: lastName,
-        email: email,
-        locale: "en_US",
-        method: "user.register",
-        password: password,
-        reg_instance: utils.generateRandomString(32),
-        return_multiple_errors: true
-      };
-
-      // Generate signature
-      const sigString = Object.keys(req)
-        .sort()
-        .map(key => `${key}=${req[key]}`)
-        .join('') + config.facebook.secret;
-
-      req.sig = crypto.createHash('md5').update(sigString).digest('hex');
-
-      const response = await axios.post("https://b-api.facebook.com/method/user.register", 
-        new URLSearchParams(req), {
-        headers: {
-          "User-Agent": "[FBAN/FB4A;FBAV/35.0.0.48.273;FBDM/{density=1.33125,width=800,height=1205};FBLC/en_US;FBCR/;FBPN/com.facebook.katana;FBDV/Nexus 7;FBSV/4.1.1;FBBK/0;]",
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Accept": "*/*",
-          "Accept-Language": "en-US",
-          "Connection": "keep-alive"
-        },
-        timeout: 30000
-      });
-
-      if (response.data && !response.data.error) {
-        const userId = response.data.new_user_id || response.data.uid || response.data.id || utils.generateRandomString(14);
-
-        return {
-          success: true,
-          account: {
-            email: email,
-            password: password,
-            firstName: firstName,
-            lastName: lastName,
-            birthday: formattedBirthday,
-            userId: userId,
-            profileLink: `https://facebook.com/profile.php?id=${userId}`,
-            gender: gender,
-            createdAt: new Date().toISOString()
-          },
-          raw: response.data
-        };
-      } else {
-        return {
-          success: false,
-          error: response.data.error_msg || response.data.error || 'Registration failed'
-        };
-      }
-    } catch (error) {
-      console.error('Facebook creation error:', error.message);
-      return {
-        success: false,
-        error: error.response?.data?.error_msg || error.message
-      };
-    }
-  }
-};
-
-// ==================== CACHE FUNCTIONS ====================
-const cache = {
-  storeAccount(account) {
-    const key = `acc_${account.userId}`;
-    accountCache.set(key, account);
-    return key;
-  },
-
-  getAccount(userId) {
-    return accountCache.get(`acc_${userId}`);
-  },
-
-  storeEmailVerification(email, data) {
-    emailCache.set(`email_${email}`, data);
-  },
-
-  getEmailVerification(email) {
-    return emailCache.get(`email_${email}`);
-  },
-
-  getAllAccounts() {
-    const keys = accountCache.keys();
-    const accounts = [];
-    keys.forEach(key => {
-      if (key.startsWith('acc_')) {
-        accounts.push(accountCache.get(key));
-      }
-    });
-    return accounts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 50);
-  }
-};
-
-// ==================== API ENDPOINTS ====================
-
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({
-    success: true,
-    status: 'online',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
-});
-
-// Create Facebook account (with optional firstName, lastName)
-app.post('/api/fbcreate', rateLimiter('account'), async (req, res) => {
-  try {
-    const { email, firstName, lastName, gender, password } = req.body;
-
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        error: 'Email is required'
-      });
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid email format'
-      });
-    }
-
-    const result = await facebook.createAccount({
-      email,
-      firstName: firstName || '',  // Pass empty string if not provided, backend will generate
-      lastName: lastName || '',    // Pass empty string if not provided, backend will generate
-      gender,
-      password
-    });
-
-    if (result.success) {
-      const account = {
-        ...result.account,
-        ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress
-      };
-
-      cache.storeAccount(account);
-      cache.storeEmailVerification(email, {
-        account: account,
-        verified: false,
-        createdAt: new Date().toISOString()
-      });
-
-      return res.json({
-        success: true,
-        data: account
-      });
-    } else {
-      return res.status(400).json({
-        success: false,
-        error: result.error
-      });
-    }
-  } catch (error) {
-    console.error('API Error:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Internal server error'
-    });
-  }
-});
-
-// Generate temp email
-app.get('/api/tempmail/gen', rateLimiter('email'), async (req, res) => {
-  try {
-    let email;
-    let fallback = false;
-
-    try {
-      const response = await axios.post('https://api.internal.temp-mail.io/api/v3/email/new', {}, {
-        timeout: 10000,
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
+    async function sharePost() {
+        if (!total.has(sessionId)) {
+            return;
         }
-      });
-      email = response.data.email;
-    } catch (error) {
-      // Fallback to local generation
-      const randomStr = Math.random().toString(36).substring(2, 10);
-      const domains = ['guerrillamail.com', 'temp-mail.org', '10minutemail.com'];
-      const domain = domains[Math.floor(Math.random() * domains.length)];
-      email = `user_${randomStr}@${domain}`;
-      fallback = true;
-    }
 
-    const names = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Omega', 'Sigma', 'Lambda'];
-    const name = names[Math.floor(Math.random() * names.length)];
-
-    res.json({
-      success: true,
-      data: {
-        email: email,
-        name: name,
-        createdAt: new Date().toISOString(),
-        expiresIn: '30 minutes',
-        fallback: fallback
-      }
-    });
-  } catch (error) {
-    console.error('Email generation error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to generate email'
-    });
-  }
-});
-
-// Check inbox
-app.get('/api/tempmail/inbox', async (req, res) => {
-  try {
-    const { email } = req.query;
-
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        error: 'Email parameter is required'
-      });
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid email format'
-      });
-    }
-
-    let messages = [];
-    let verificationCode = null;
-    let verificationLink = null;
-
-    try {
-      const response = await axios.get(`https://api.internal.temp-mail.io/api/v3/email/${email}/messages`, {
-        timeout: 15000,
-        headers: {
-          'Accept': 'application/json'
+        if (!RateLimiter.checkLimit(sessionId)) {
+            await Logger.log(sessionId, 'rate_limited', { timestamp: new Date().toISOString() });
+            return;
         }
-      });
 
-      messages = response.data || [];
+        try {
+            const response = await axios.post(
+                `https://graph.facebook.com/me/feed?link=https://m.facebook.com/${id}&published=0&access_token=${accessToken}`,
+                {},
+                {
+                    headers: {
+                        'accept': '*/*',
+                        'accept-encoding': 'gzip, deflate',
+                        'connection': 'keep-alive',
+                        'content-length': '0',
+                        'cookie': cookies,
+                        'host': 'graph.facebook.com'
+                    },
+                    timeout: CONFIG.REQUEST_TIMEOUT
+                }
+            );
 
-      // Look for verification codes
-      for (const msg of messages) {
-        if (msg.subject && msg.subject.toLowerCase().includes('facebook')) {
-          const body = msg.body_text || msg.body_html || '';
+            if (response.status === 200) {
+                sharedCount++;
+                consecutiveErrors = 0;
 
-          // Extract verification code (6-8 digits)
-          const codeMatch = body.match(/\b\d{6,8}\b/);
-          if (codeMatch) verificationCode = codeMatch[0];
+                const session = total.get(sessionId);
+                if (session) {
+                    session.count = sharedCount;
+                    session.sharedCount = sharedCount;
+                    session.status = sharedCount >= amount ? 'completed' : 'running';
+                    total.set(sessionId, session);
+                }
 
-          // Extract verification link
-          const linkMatch = body.match(/https?:\/\/[^\s]+facebook[^\s]+/i);
-          if (linkMatch) verificationLink = linkMatch[0];
+                await Logger.log(sessionId, 'share_success', {
+                    count: sharedCount,
+                    total: amount,
+                    postId: id,
+                    timestamp: new Date().toISOString()
+                });
 
-          break;
+                if (sharedCount >= amount) {
+                    await stopSharing(sessionId);
+                    await Logger.log(sessionId, 'session_completed', {
+                        totalShared: sharedCount,
+                        completedAt: new Date().toISOString()
+                    });
+                }
+            }
+        } catch (error) {
+            consecutiveErrors++;
+            await Logger.log(sessionId, 'share_error', {
+                error: error.message,
+                consecutiveErrors,
+                postId: id,
+                timestamp: new Date().toISOString()
+            });
+
+            if (consecutiveErrors >= 5) {
+                await Logger.log(sessionId, 'session_stopped_due_to_errors', {
+                    reason: 'Too many consecutive errors',
+                    errorCount: consecutiveErrors
+                });
+                await stopSharing(sessionId);
+                if (total.has(sessionId)) {
+                    const session = total.get(sessionId);
+                    session.status = 'failed';
+                    session.error = `Stopped after ${consecutiveErrors} consecutive errors`;
+                    total.set(sessionId, session);
+                }
+            }
         }
-      }
-    } catch (apiError) {
-      // Return empty inbox if API fails
-      console.log('Inbox API error, returning empty');
     }
 
-    const storedData = cache.getEmailVerification(email);
+    const timer = setInterval(sharePost, interval * 1000);
+    activeTimers.set(sessionId, timer);
 
-    res.json({
-      success: true,
-      data: {
-        messages: messages,
-        count: messages.length,
-        email: email,
-        verification: {
-          code: verificationCode,
-          link: verificationLink,
-          hasAccount: !!storedData,
-          account: storedData ? storedData.account : null
+    const timeoutId = setTimeout(() => {
+        if (total.has(sessionId) && total.get(sessionId).count < amount) {
+            stopSharing(sessionId);
+            const session = total.get(sessionId);
+            if (session) {
+                session.status = 'timeout';
+                session.error = 'Session timed out before completion';
+                total.set(sessionId, session);
+            }
         }
-      }
-    });
-  } catch (error) {
-    console.error('Inbox fetch error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch inbox'
-    });
-  }
-});
+    }, amount * interval * 1000 + 60000);
 
-// Dashboard stats
-app.get('/api/dashboard/stats', (req, res) => {
-  try {
-    const accounts = cache.getAllAccounts();
-    const now = new Date();
-    const lastHour = accounts.filter(acc => 
-      new Date(acc.createdAt) > new Date(now - 60 * 60 * 1000)
-    ).length;
+    activeTimers.set(`${sessionId}_timeout`, timeoutId);
 
-    const lastDay = accounts.filter(acc => 
-      new Date(acc.createdAt) > new Date(now - 24 * 60 * 60 * 1000)
-    ).length;
+    return {
+        sessionId,
+        estimatedCompletion: estimatedCompletion.toISOString()
+    };
+}
 
-    res.json({
-      success: true,
-      data: {
-        totalAccounts: accounts.length,
-        lastHour,
-        lastDay,
-        uptime: process.uptime(),
-        memory: process.memoryUsage(),
-        cpu: os.loadavg(),
-        platform: os.platform(),
+async function stopSharing(sessionId) {
+    const timer = activeTimers.get(sessionId);
+    if (timer) {
+        clearInterval(timer);
+        activeTimers.delete(sessionId);
+    }
+
+    const timeoutId = activeTimers.get(`${sessionId}_timeout`);
+    if (timeoutId) {
+        clearTimeout(timeoutId);
+        activeTimers.delete(`${sessionId}_timeout`);
+    }
+
+    await Logger.log(sessionId, 'session_stopped', {
         timestamp: new Date().toISOString()
-      }
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch stats'
-    });
-  }
-});
+}
 
-// Recent accounts
-app.get('/api/accounts/recent', (req, res) => {
-  try {
-    const accounts = cache.getAllAccounts();
+async function getPostID(url, retryCount = 0) {
+    try {
+        const response = await axios.post('https://id.traodoisub.com/api.php', 
+            `link=${encodeURIComponent(url)}`,
+            {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                timeout: CONFIG.REQUEST_TIMEOUT
+            }
+        );
+
+        if (response.data && response.data.id) {
+            return response.data.id;
+        }
+        throw new Error('No ID returned from API');
+    } catch (error) {
+        if (retryCount < CONFIG.RETRY_ATTEMPTS) {
+            await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY));
+            return getPostID(url, retryCount + 1);
+        }
+        return null;
+    }
+}
+
+async function getAccessToken(cookie, retryCount = 0) {
+    try {
+        const headers = {
+            'authority': 'business.facebook.com',
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'accept-language': 'en-US,en;q=0.9',
+            'cache-control': 'max-age=0',
+            'cookie': cookie,
+            'referer': 'https://www.facebook.com/',
+            'sec-ch-ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-fetch-dest': 'document',
+            'sec-fetch-mode': 'navigate',
+            'sec-fetch-site': 'same-origin',
+            'upgrade-insecure-requests': '1',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        };
+
+        const response = await axios.get('https://business.facebook.com/content_management', {
+            headers,
+            timeout: CONFIG.REQUEST_TIMEOUT
+        });
+
+        const tokenMatch = response.data.match(/"accessToken":"([^"]+)"/);
+        if (tokenMatch && tokenMatch[1]) {
+            return tokenMatch[1];
+        }
+
+        throw new Error('Access token not found in response');
+    } catch (error) {
+        if (retryCount < CONFIG.RETRY_ATTEMPTS) {
+            await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY));
+            return getAccessToken(cookie, retryCount + 1);
+        }
+        return null;
+    }
+}
+
+async function convertCookie(cookie) {
+    try {
+        let cookies;
+        if (typeof cookie === 'string') {
+            try {
+                cookies = JSON.parse(cookie);
+            } catch {
+                if (cookie.includes('=')) {
+                    return cookie;
+                }
+                throw new Error('Invalid cookie format');
+            }
+        } else if (Array.isArray(cookie)) {
+            cookies = cookie;
+        } else {
+            throw new Error('Cookie must be an array or JSON string');
+        }
+
+        const sbCookie = cookies.find(c => c.key === "sb");
+        if (!sbCookie) {
+            throw new Error("Cookie missing 'sb' field - invalid appstate");
+        }
+
+        const sbValue = sbCookie.value;
+        const cookieString = `sb=${sbValue}; ${cookies
+            .filter(c => c.key !== "sb")
+            .map(c => `${c.key}=${c.value}`)
+            .join('; ')}`;
+
+        return cookieString;
+    } catch (error) {
+        console.error('Cookie conversion error:', error);
+        throw new Error(error.message || "Error processing cookie");
+    }
+}
+
+// Cleanup old sessions and logs periodically (every hour)
+setInterval(() => {
+    const now = Date.now();
+    for (const [sessionId, session] of total.entries()) {
+        const sessionTime = new Date(session.startTime).getTime();
+        if (session.status === 'completed' && (now - sessionTime) > 86400000) { // 24 hours
+            total.delete(sessionId);
+            sessionLogs.delete(sessionId);
+        }
+    }
+    
+    // Clean up old log files (older than 7 days)
+    const sevenDaysAgo = now - (7 * 86400000);
+    // Log file cleanup would go here if needed
+}, 3600000);
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
     res.json({
-      success: true,
-      data: accounts
+        status: 'healthy',
+        activeSessions: total.size,
+        maxConcurrent: 'Unlimited',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch recent accounts'
-    });
-  }
 });
 
-// ==================== FRONTEND ROUTES ====================
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// ========== 404 and 500 ERROR HANDLING MIDDLEWARE ==========
 
-// ==================== ERROR HANDLING ====================
+// Handle 500 errors - Catch-all for unhandled errors in routes
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({
-    success: false,
-    error: 'Internal server error'
-  });
+    console.error('Unhandled error:', err);
+    console.error('Error stack:', err.stack);
+    
+    if (res.headersSent) {
+        return next(err);
+    }
+    
+    if (req.path.startsWith('/api/')) {
+        return res.status(500).json({
+            success: false,
+            error: 'Internal server error',
+            message: err.message || 'Something went wrong on the server'
+        });
+    }
+    
+    res.status(500);
+    res.sendFile(path.join(__dirname, 'public', '500.html'), (sendErr) => {
+        if (sendErr) {
+            res.status(500).send(`
+                <!DOCTYPE html>
+                <html>
+                <head><title>500 - Server Error</title></head>
+                <body style="font-family: Arial; text-align: center; padding: 50px;">
+                    <h1>500 - Internal Server Error</h1>
+                    <p>Something went wrong on our end. Please try again later.</p>
+                    <a href="/">Return to Home</a>
+                </body>
+                </html>
+            `);
+        }
+    });
 });
 
-// 404 handler
+// Handle 404 - Catch-all for undefined routes
 app.use((req, res) => {
-  res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+    if (req.path.startsWith('/api/')) {
+        return res.status(404).json({
+            success: false,
+            error: 'API endpoint not found',
+            path: req.path
+        });
+    }
+    
+    res.status(404);
+    res.sendFile(path.join(__dirname, 'public', '404.html'), (sendErr) => {
+        if (sendErr) {
+            res.status(404).send(`
+                <!DOCTYPE html>
+                <html>
+                <head><title>404 - Page Not Found</title></head>
+                <body style="font-family: Arial; text-align: center; padding: 50px;">
+                    <h1>404 - Page Not Found</h1>
+                    <p>The page you are looking for does not exist.</p>
+                    <a href="/">Return to Home</a>
+                </body>
+                </html>
+            `);
+        }
+    });
 });
 
-// ==================== START SERVER ====================
+// Create logs directory if it doesn't exist
+(async () => {
+    try {
+        await fs.mkdir('logs', { recursive: true });
+        console.log('Logs directory created');
+    } catch (error) {
+        console.error('Failed to create logs directory:', error);
+    }
+})();
+
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 http://localhost:${PORT}`);
-  console.log(`✨ Features: Optional name fields, auto-generates random Filipino names if left blank`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  process.exit(0);
-});
-
-process.on('SIGINT', () => {
-  console.log('SIGINT received, shutting down gracefully');
-  process.exit(0);
+    console.log(`╔══════════════════════════════════════════════════╗`);
+    console.log(`║     SHAREBOOST PRO SERVER STARTED SUCCESSFULLY   ║`);
+    console.log(`╠══════════════════════════════════════════════════╣`);
+    console.log(`║  🚀 Server running on port: ${PORT}                     ║`);
+    console.log(`║  📊 Health check: http://localhost:${PORT}/api/health  ║`);
+    console.log(`║  📈 Total endpoint: http://localhost:${PORT}/api/total  ║`);
+    console.log(`║  🎵 TikTok API: http://localhost:${PORT}/api/tiktok/random ║`);
+    console.log(`║  🌐 Dashboard: http://localhost:${PORT}/dashboard.html  ║`);
+    console.log(`║  📋 Logs: http://localhost:${PORT}/logs.html            ║`);
+    console.log(`║  📖 API Docs: http://localhost:${PORT}/api-docs.html    ║`);
+    console.log(`║  ♾️  Unlimited concurrent sessions enabled              ║`);
+    console.log(`║  ⏱️  Fixed delay: 2 seconds enforced                    ║`);
+    console.log(`╚══════════════════════════════════════════════════╝`);
 });
 
 module.exports = app;

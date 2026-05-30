@@ -13,18 +13,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Enhanced data structures
 const total = new Map();
 const activeTimers = new Map();
-const requestQueue = new Map();
 const rateLimiter = new Map();
 const sessionLogs = new Map();
 
 // TikTok video cache
 let tiktokVideoCache = null;
 let lastTikTokFetch = 0;
-const TIKTOK_CACHE_DURATION = 60000; // 1 minute cache
+const TIKTOK_CACHE_DURATION = 30000; // 30 seconds cache
 
 // Configuration
 const CONFIG = {
-    MAX_CONCURRENT_SESSIONS: 5, // This value is now ignored (removed limit)
     RATE_LIMIT_WINDOW: 60000, // 1 minute
     MAX_REQUESTS_PER_WINDOW: 30,
     REQUEST_TIMEOUT: 30000,
@@ -48,12 +46,13 @@ class Logger {
         }
         sessionLogs.get(sessionId).push(logEntry);
 
-        // Auto cleanup old logs (keep last 1000 per session)
-        if (sessionLogs.get(sessionId).length > 1000) {
+        // Keep last 500 logs per session
+        if (sessionLogs.get(sessionId).length > 500) {
             sessionLogs.set(sessionId, sessionLogs.get(sessionId).slice(-500));
         }
 
-        if (sessionLogs.get(sessionId).length % 10 === 0) {
+        // Save to file every 50 logs
+        if (sessionLogs.get(sessionId).length % 50 === 0) {
             await this.saveToFile(sessionId);
         }
     }
@@ -62,10 +61,10 @@ class Logger {
         const logs = sessionLogs.get(sessionId);
         if (!logs) return;
 
-        const filename = `logs/session_${sessionId}_${Date.now()}.json`;
         try {
             await fs.mkdir('logs', { recursive: true });
-            await fs.writeFile(filename, JSON.stringify(logs, null, 2));
+            const filename = `logs/session_${sessionId}_${Date.now()}.json`;
+            await fs.writeFile(filename, JSON.stringify(logs.slice(-200), null, 2));
         } catch (error) {
             console.error('Failed to save logs:', error);
         }
@@ -113,18 +112,12 @@ async function fetchRandomTikTok() {
         const response = await axios.get('https://betadash-shoti-yazky.vercel.app/shotizxx?apikey=shipazu', {
             timeout: 10000
         });
-        
+
         if (response.data && response.data.shotiurl) {
             return {
                 success: true,
                 video: {
-                    url: response.data.shotiurl,
-                    title: response.data.title || 'No title',
-                    author: response.data.username || 'unknown',
-                    nickname: response.data.nickname || 'User',
-                    duration: response.data.duration || 0,
-                    cover: response.data.cover || response.data.cover_image,
-                    region: response.data.region || 'Unknown'
+                    url: response.data.shotiurl
                 }
             };
         }
@@ -138,12 +131,55 @@ async function fetchRandomTikTok() {
     }
 }
 
-// Enhanced endpoints
+// ============== API ENDPOINTS ==============
+
+// Get all sessions with stats (for logs page)
+app.get('/api/sessions/summary', (req, res) => {
+    try {
+        const sessions = Array.from(total.values()).map(session => ({
+            sessionId: session.sessionId,
+            postId: session.postId,
+            status: session.status,
+            sharedCount: session.count,
+            targetAmount: session.target,
+            url: session.url,
+            startTime: session.startTime
+        }));
+
+        let totalShares = 0;
+        let activeSessions = 0;
+        let completedSessions = 0;
+
+        sessions.forEach(session => {
+            totalShares += session.sharedCount || 0;
+            if (session.status === 'running') activeSessions++;
+            if (session.status === 'completed') completedSessions++;
+        });
+
+        res.json({
+            success: true,
+            sessions,
+            totals: {
+                totalShares,
+                activeSessions,
+                completedSessions,
+                totalSessions: sessions.length
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching sessions summary:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch sessions summary'
+        });
+    }
+});
+
+// Get detailed sessions (for backward compatibility)
 app.get('/api/total', (req, res) => {
     try {
-        const data = Array.from(total.values()).map((session, index) => ({
+        const data = Array.from(total.values()).map(session => ({
             sessionId: session.sessionId,
-            sessionNumber: index + 1,
             url: session.url,
             sharedCount: session.count,
             targetAmount: session.target,
@@ -170,31 +206,25 @@ app.get('/api/total', (req, res) => {
     }
 });
 
-// TikTok endpoint
+// TikTok endpoint - returns only video URL
 app.get('/api/tiktok/random', async (req, res) => {
     try {
-        // Check cache
         const now = Date.now();
         if (tiktokVideoCache && (now - lastTikTokFetch) < TIKTOK_CACHE_DURATION) {
             return res.json(tiktokVideoCache);
         }
-        
+
         const result = await fetchRandomTikTok();
         if (result.success) {
             tiktokVideoCache = result;
             lastTikTokFetch = now;
             res.json(result);
         } else {
-            // Return fallback video if API fails
+            // Fallback video
             res.json({
                 success: true,
                 video: {
-                    url: "https://v16m.tiktokcdn-us.com/5df5e84d2402e0ba15dfa7680934a925/6a1af973/video/tos/alisg/tos-alisg-pve-0037c001/ogfjIIpt4fwX0siphQCyEjV6APFvDOAeUbDgbE/?a=1233&bti=OUBzOTg7QGo6OjZAL3AjLTAzYCMxNDNg&&bt=1105&ft=kLx3-yt4ZZo0PDFqad3aQ9ATU~j6JE.C~&mime_type=video_mp4&rc=ODM3OGc0ZzM6ODM7ZmllZkBpMzRvcnk5cnZ4djMzODczNEBfYzYwX15eNmExMGEwLzJiYSNwa2ZqMmQ0aGhgLS1kMS1zcw%3D%3D&vvpl=1&l=2026053008512459F084F3864AA74F0D80&btag=e000f0000",
-                    title: "TikTok Viral Video",
-                    author: "trending",
-                    nickname: "Trending",
-                    duration: 15,
-                    region: "US"
+                    url: "https://v16m.tiktokcdn-us.com/5df5e84d2402e0ba15dfa7680934a925/6a1af973/video/tos/alisg/tos-alisg-pve-0037c001/ogfjIIpt4fwX0siphQCyEjV6APFvDOAeUbDgbE/?a=1233&bti=OUBzOTg7QGo6OjZAL3AjLTAzYCMxNDNg&&bt=1105&ft=kLx3-yt4ZZo0PDFqad3aQ9ATU~j6JE.C~&mime_type=video_mp4&rc=ODM3OGc0ZzM6ODM7ZmllZkBpMzRvcnk5cnZ4djMzODczNEBfYzYwX15eNmExMGEwLzJiYSNwa2ZqMmQ0aGhgLS1kMS1zcw%3D%3D&vvpl=1&l=2026053008512459F084F3864AA74F0D80&btag=e000f0000"
                 }
             });
         }
@@ -207,19 +237,19 @@ app.get('/api/tiktok/random', async (req, res) => {
     }
 });
 
+// Get session logs
 app.get('/api/session/:sessionId/logs', (req, res) => {
     try {
         const { sessionId } = req.params;
         const logs = Logger.getLogs(sessionId);
-        
-        // Format logs for display
+
         const formattedLogs = logs.map(log => ({
             timestamp: log.timestamp,
             action: log.action,
             data: log.data,
             sessionId: log.sessionId
         }));
-        
+
         res.json({
             success: true,
             sessionId,
@@ -235,49 +265,7 @@ app.get('/api/session/:sessionId/logs', (req, res) => {
     }
 });
 
-// Get all sessions summary for logs page
-app.get('/api/sessions/summary', (req, res) => {
-    try {
-        const sessions = Array.from(total.values()).map(session => ({
-            sessionId: session.sessionId,
-            postId: session.postId,
-            status: session.status,
-            sharedCount: session.count,
-            targetAmount: session.target,
-            url: session.url,
-            startTime: session.startTime
-        }));
-        
-        // Calculate totals
-        let totalShares = 0;
-        let activeSessions = 0;
-        let completedSessions = 0;
-        
-        sessions.forEach(session => {
-            totalShares += session.sharedCount || 0;
-            if (session.status === 'running') activeSessions++;
-            if (session.status === 'completed') completedSessions++;
-        });
-        
-        res.json({
-            success: true,
-            sessions,
-            totals: {
-                totalShares,
-                activeSessions,
-                completedSessions,
-                totalSessions: sessions.length
-            }
-        });
-    } catch (error) {
-        console.error('Error fetching sessions summary:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to fetch sessions summary'
-        });
-    }
-});
-
+// Stop session
 app.delete('/api/session/:sessionId', async (req, res) => {
     try {
         const { sessionId } = req.params;
@@ -305,20 +293,15 @@ app.delete('/api/session/:sessionId', async (req, res) => {
     }
 });
 
+// Submit new share session
 app.post('/api/submit', async (req, res) => {
     try {
-        const {
-            cookie,
-            url,
-            amount,
-            interval,
-            sessionId: providedSessionId
-        } = req.body;
+        const { cookie, url, amount, interval } = req.body;
 
-        if (!cookie || !url || !amount || !interval) {
+        if (!cookie || !url || !amount) {
             return res.status(400).json({
                 success: false,
-                error: 'Missing required fields: cookie, url, amount, or interval'
+                error: 'Missing required fields: cookie, url, amount'
             });
         }
 
@@ -331,13 +314,10 @@ app.post('/api/submit', async (req, res) => {
 
         // Force interval to always be 2 seconds
         const forcedInterval = 2;
-        
-        if (interval !== 2) {
+
+        if (interval && interval !== 2) {
             console.log(`Interval changed from ${interval} to 2 seconds (forced)`);
         }
-
-        // REMOVED: Maximum concurrent sessions check
-        // Now unlimited sessions allowed
 
         const cookies = await convertCookie(cookie);
         if (!cookies) {
@@ -347,7 +327,7 @@ app.post('/api/submit', async (req, res) => {
             });
         }
 
-        const sessionId = providedSessionId || crypto.randomBytes(16).toString('hex');
+        const sessionId = crypto.randomBytes(16).toString('hex');
         const result = await share(cookies, url, amount, forcedInterval, sessionId);
 
         res.json({
@@ -364,6 +344,19 @@ app.post('/api/submit', async (req, res) => {
         });
     }
 });
+
+// Health check
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'healthy',
+        activeSessions: total.size,
+        maxConcurrent: 'Unlimited',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+    });
+});
+
+// ============== CORE FUNCTIONS ==============
 
 async function share(cookies, url, amount, interval, sessionId) {
     const id = await getPostID(url);
@@ -422,7 +415,8 @@ async function share(cookies, url, amount, interval, sessionId) {
                         'connection': 'keep-alive',
                         'content-length': '0',
                         'cookie': cookies,
-                        'host': 'graph.facebook.com'
+                        'host': 'graph.facebook.com',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
                     },
                     timeout: CONFIG.REQUEST_TIMEOUT
                 }
@@ -621,7 +615,7 @@ async function convertCookie(cookie) {
     }
 }
 
-// Cleanup old sessions and logs periodically (every hour)
+// Cleanup old sessions every hour
 setInterval(() => {
     const now = Date.now();
     for (const [sessionId, session] of total.entries()) {
@@ -630,94 +624,45 @@ setInterval(() => {
             total.delete(sessionId);
             sessionLogs.delete(sessionId);
         }
+        if (session.status === 'failed' && (now - sessionTime) > 43200000) { // 12 hours
+            total.delete(sessionId);
+            sessionLogs.delete(sessionId);
+        }
     }
-    
-    // Clean up old log files (older than 7 days)
-    const sevenDaysAgo = now - (7 * 86400000);
-    // Log file cleanup would go here if needed
 }, 3600000);
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-    res.json({
-        status: 'healthy',
-        activeSessions: total.size,
-        maxConcurrent: 'Unlimited',
-        uptime: process.uptime(),
-        timestamp: new Date().toISOString()
+// 404 handler for HTML pages
+app.get('/dashboard.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
+
+app.get('/logs.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'logs.html'));
+});
+
+app.get('/api-docs.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'api-docs.html'));
+});
+
+// Default route
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
+
+// 404 handler for API
+app.use('/api/*', (req, res) => {
+    res.status(404).json({
+        success: false,
+        error: 'API endpoint not found',
+        path: req.path
     });
 });
 
-// ========== 404 and 500 ERROR HANDLING MIDDLEWARE ==========
-
-// Handle 500 errors - Catch-all for unhandled errors in routes
-app.use((err, req, res, next) => {
-    console.error('Unhandled error:', err);
-    console.error('Error stack:', err.stack);
-    
-    if (res.headersSent) {
-        return next(err);
-    }
-    
-    if (req.path.startsWith('/api/')) {
-        return res.status(500).json({
-            success: false,
-            error: 'Internal server error',
-            message: err.message || 'Something went wrong on the server'
-        });
-    }
-    
-    res.status(500);
-    res.sendFile(path.join(__dirname, 'public', '500.html'), (sendErr) => {
-        if (sendErr) {
-            res.status(500).send(`
-                <!DOCTYPE html>
-                <html>
-                <head><title>500 - Server Error</title></head>
-                <body style="font-family: Arial; text-align: center; padding: 50px;">
-                    <h1>500 - Internal Server Error</h1>
-                    <p>Something went wrong on our end. Please try again later.</p>
-                    <a href="/">Return to Home</a>
-                </body>
-                </html>
-            `);
-        }
-    });
-});
-
-// Handle 404 - Catch-all for undefined routes
-app.use((req, res) => {
-    if (req.path.startsWith('/api/')) {
-        return res.status(404).json({
-            success: false,
-            error: 'API endpoint not found',
-            path: req.path
-        });
-    }
-    
-    res.status(404);
-    res.sendFile(path.join(__dirname, 'public', '404.html'), (sendErr) => {
-        if (sendErr) {
-            res.status(404).send(`
-                <!DOCTYPE html>
-                <html>
-                <head><title>404 - Page Not Found</title></head>
-                <body style="font-family: Arial; text-align: center; padding: 50px;">
-                    <h1>404 - Page Not Found</h1>
-                    <p>The page you are looking for does not exist.</p>
-                    <a href="/">Return to Home</a>
-                </body>
-                </html>
-            `);
-        }
-    });
-});
-
-// Create logs directory if it doesn't exist
+// Create logs directory and start server
 (async () => {
     try {
         await fs.mkdir('logs', { recursive: true });
-        console.log('Logs directory created');
+        console.log('📁 Logs directory ready');
     } catch (error) {
         console.error('Failed to create logs directory:', error);
     }
@@ -725,19 +670,20 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`╔══════════════════════════════════════════════════╗`);
-    console.log(`║     SHAREBOOST PRO SERVER STARTED SUCCESSFULLY   ║`);
-    console.log(`╠══════════════════════════════════════════════════╣`);
-    console.log(`║  🚀 Server running on port: ${PORT}                     ║`);
-    console.log(`║  📊 Health check: http://localhost:${PORT}/api/health  ║`);
-    console.log(`║  📈 Total endpoint: http://localhost:${PORT}/api/total  ║`);
-    console.log(`║  🎵 TikTok API: http://localhost:${PORT}/api/tiktok/random ║`);
-    console.log(`║  🌐 Dashboard: http://localhost:${PORT}/dashboard.html  ║`);
-    console.log(`║  📋 Logs: http://localhost:${PORT}/logs.html            ║`);
-    console.log(`║  📖 API Docs: http://localhost:${PORT}/api-docs.html    ║`);
-    console.log(`║  ♾️  Unlimited concurrent sessions enabled              ║`);
-    console.log(`║  ⏱️  Fixed delay: 2 seconds enforced                    ║`);
-    console.log(`╚══════════════════════════════════════════════════╝`);
+    console.log(`
+╔══════════════════════════════════════════════════════════════╗
+║                    SHAREBOOST PRO SERVER                      ║
+╠══════════════════════════════════════════════════════════════╣
+║  🚀 Server running on port: ${PORT}                              ║
+║  🌐 Dashboard:      http://localhost:${PORT}/dashboard.html     ║
+║  📋 Live Logs:      http://localhost:${PORT}/logs.html          ║
+║  📖 API Docs:       http://localhost:${PORT}/api-docs.html      ║
+║  🎵 TikTok API:     http://localhost:${PORT}/api/tiktok/random  ║
+║  ♾️  Unlimited concurrent sessions enabled                      ║
+║  ⏱️  Fixed delay: 2 seconds enforced                            ║
+║  📊 Health check:   http://localhost:${PORT}/api/health         ║
+╚══════════════════════════════════════════════════════════════╝
+    `);
 });
 
 module.exports = app;

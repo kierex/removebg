@@ -1,4 +1,4 @@
-<!-- dashboard.html - NO STATS, only video + form + next video button -->
+<!-- dashboard.html - Fixed with video controls (play/pause, mute/unmute, volume, progress bar) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -71,7 +71,7 @@
         .result-message.error { background: rgba(255, 70, 130, 0.2); border: 1px solid #ff6e8b; color: #ffbcbc; display: block; }
         @keyframes fadeSlide { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* TikTok Video Section - ONLY VIDEO, NO INFO, with BORDER */
+        /* Custom Video Player with Controls */
         .tiktok-section {
             margin-bottom: 28px;
             display: flex;
@@ -80,7 +80,7 @@
             align-items: center;
         }
         .video-container {
-            background: rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.5);
             border-radius: 32px;
             padding: 16px;
             border: 3px solid transparent;
@@ -89,6 +89,7 @@
             box-shadow: 0 0 25px rgba(120, 115, 245, 0.4);
             transition: all 0.3s ease;
             margin-bottom: 16px;
+            position: relative;
         }
         .video-container:hover {
             transform: scale(1.01);
@@ -96,19 +97,106 @@
             border-image: linear-gradient(135deg, #ffb347, #ff6ec7, #7873f5);
             border-image-slice: 1;
         }
+        .video-wrapper {
+            position: relative;
+            border-radius: 24px;
+            overflow: hidden;
+        }
         .tiktok-video {
-            max-width: 100%;
             width: 100%;
             height: auto;
-            border-radius: 24px;
             display: block;
             background: #000;
             aspect-ratio: 4 / 3;
             object-fit: cover;
+            cursor: pointer;
         }
-        .video-wrapper {
+        
+        /* Custom Controls Overlay */
+        .video-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.4), transparent);
+            padding: 12px 16px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(8px);
+        }
+        .video-wrapper:hover .video-controls {
+            opacity: 1;
+        }
+        .controls-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .control-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+        .control-btn:hover {
+            background: rgba(255,255,255,0.4);
+            transform: scale(1.05);
+        }
+        .progress-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .progress-bar {
+            flex: 1;
+            height: 5px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 5px;
+            cursor: pointer;
             position: relative;
         }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6ec7, #7873f5);
+            border-radius: 5px;
+            width: 0%;
+            position: relative;
+        }
+        .time-display {
+            color: white;
+            font-size: 12px;
+            font-family: monospace;
+            background: rgba(0,0,0,0.5);
+            padding: 4px 8px;
+            border-radius: 20px;
+        }
+        .volume-slider {
+            width: 60px;
+            height: 4px;
+            -webkit-appearance: none;
+            background: rgba(255,255,255,0.3);
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff86e0;
+            cursor: pointer;
+        }
+        
         .next-video-btn {
             background: linear-gradient(135deg, #7248ff, #c55aff);
             border: none;
@@ -123,25 +211,24 @@
             gap: 12px;
             transition: all 0.3s;
             box-shadow: 0 4px 15px rgba(114, 72, 255, 0.4);
-            margin-top: 8px;
         }
         .next-video-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(197, 90, 255, 0.5);
         }
-        .next-video-btn:active {
-            transform: translateY(1px);
-        }
         
-        .nav-links { display: flex; gap: 20px; justify-content: center; margin-top: 20px; }
+        .nav-links { display: flex; gap: 20px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
         .nav-link { color: #c5b3ff; text-decoration: none; padding: 8px 20px; border-radius: 30px; background: rgba(255,255,255,0.1); transition: 0.2s; }
         .nav-link:hover { background: rgba(255,255,255,0.2); color: white; }
         
         @media (max-width: 760px) { 
             .form-row { grid-template-columns: 1fr; gap: 12px; } 
             .container, .form-wrapper { padding: 24px; } 
-            h1 { font-size: 38px; } 
+            h1 { font-size: 38px; }
             .video-container { padding: 10px; }
+            .controls-row { gap: 8px; }
+            .control-btn { width: 30px; height: 30px; font-size: 12px; }
+            .volume-slider { width: 40px; }
         }
     </style>
 </head>
@@ -160,13 +247,30 @@
         </div>
     </div>
 
-    <!-- TikTok Video Section - ONLY VIDEO, NO INFO, with border and Next button -->
+    <!-- TikTok Video Section with Custom Controls -->
     <div class="tiktok-section">
         <div class="video-container">
             <div class="video-wrapper">
-                <video id="tiktokVideoPlayer" class="tiktok-video" autoplay loop muted playsinline>
+                <video id="tiktokVideoPlayer" class="tiktok-video" preload="metadata">
                     <source src="" type="video/mp4">
                 </video>
+                <div class="video-controls">
+                    <div class="controls-row">
+                        <button class="control-btn" id="playPauseBtn">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <div class="progress-container">
+                            <div class="progress-bar" id="progressBar">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                            <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
+                        </div>
+                        <button class="control-btn" id="muteBtn">
+                            <i class="fas fa-volume-up"></i>
+                        </button>
+                        <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.01" value="1">
+                    </div>
+                </div>
             </div>
         </div>
         <button class="next-video-btn" id="nextVideoBtn">
@@ -217,33 +321,150 @@
 </div>
 
 <script>
-    // Fetch TikTok video (no info display)
+    // Video player elements
+    const video = document.getElementById('tiktokVideoPlayer');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const progressBar = document.getElementById('progressBar');
+    const progressFill = document.getElementById('progressFill');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const muteBtn = document.getElementById('muteBtn');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const nextVideoBtn = document.getElementById('nextVideoBtn');
+    
+    let isDraggingProgress = false;
+    
+    // Format time (seconds to MM:SS)
+    function formatTime(seconds) {
+        if (isNaN(seconds)) return "0:00";
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+    
+    // Update progress bar and time display
+    function updateProgress() {
+        if (!isDraggingProgress && video.duration) {
+            const percent = (video.currentTime / video.duration) * 100;
+            progressFill.style.width = `${percent}%`;
+            timeDisplay.textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
+        }
+    }
+    
+    // Update play/pause button icon
+    function updatePlayPauseIcon() {
+        if (video.paused) {
+            playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+        } else {
+            playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        }
+    }
+    
+    // Play/Pause
+    function togglePlayPause() {
+        if (video.paused) {
+            video.play().catch(e => console.log('Play failed:', e));
+        } else {
+            video.pause();
+        }
+        updatePlayPauseIcon();
+    }
+    
+    // Seek to position
+    function seekTo(e) {
+        const rect = progressBar.getBoundingClientRect();
+        const pos = (e.clientX - rect.left) / rect.width;
+        if (video.duration) {
+            video.currentTime = pos * video.duration;
+        }
+    }
+    
+    // Mute/Unmute
+    function toggleMute() {
+        video.muted = !video.muted;
+        muteBtn.innerHTML = video.muted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
+        volumeSlider.value = video.muted ? 0 : (video.volume || 1);
+    }
+    
+    // Update volume
+    function updateVolume() {
+        video.volume = parseFloat(volumeSlider.value);
+        video.muted = false;
+        muteBtn.innerHTML = video.volume === 0 ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
+        if (video.volume === 0) {
+            video.muted = true;
+        }
+    }
+    
+    // Load new video
     async function loadTikTokVideo() {
-        const videoEl = document.getElementById('tiktokVideoPlayer');
-        const sourceEl = videoEl.querySelector('source');
-        
-        // Show loading state
-        videoEl.style.opacity = '0.5';
+        const currentSrc = video.querySelector('source').src;
         
         try {
             const response = await fetch('/api/tiktok/random');
             const data = await response.json();
             if (data.success && data.video && data.video.url) {
-                const oldSrc = sourceEl.src;
-                sourceEl.src = data.video.url;
-                videoEl.load();
-                videoEl.play().catch(e => console.log('autoplay blocked', e));
-                videoEl.style.opacity = '1';
-            } else {
-                console.warn('No video url');
-                videoEl.style.opacity = '1';
+                // Store current playback state
+                const wasPlaying = !video.paused;
+                
+                // Load new video
+                video.querySelector('source').src = data.video.url;
+                video.load();
+                
+                // Wait for metadata to load
+                video.addEventListener('loadedmetadata', () => {
+                    if (wasPlaying) {
+                        video.play().catch(e => console.log('autoplay blocked', e));
+                    }
+                    updatePlayPauseIcon();
+                }, { once: true });
             }
         } catch (err) {
             console.error('TikTok fetch error:', err);
-            videoEl.style.opacity = '1';
         }
     }
     
+    // Event listeners
+    playPauseBtn.addEventListener('click', togglePlayPause);
+    video.addEventListener('click', togglePlayPause);
+    video.addEventListener('play', updatePlayPauseIcon);
+    video.addEventListener('pause', updatePlayPauseIcon);
+    video.addEventListener('timeupdate', updateProgress);
+    video.addEventListener('loadedmetadata', () => {
+        timeDisplay.textContent = `0:00 / ${formatTime(video.duration)}`;
+        progressFill.style.width = '0%';
+    });
+    
+    // Progress bar seeking
+    progressBar.addEventListener('mousedown', (e) => {
+        isDraggingProgress = true;
+        seekTo(e);
+    });
+    window.addEventListener('mousemove', (e) => {
+        if (isDraggingProgress) {
+            seekTo(e);
+        }
+    });
+    window.addEventListener('mouseup', () => {
+        isDraggingProgress = false;
+    });
+    
+    // Mute and volume
+    muteBtn.addEventListener('click', toggleMute);
+    volumeSlider.addEventListener('input', updateVolume);
+    
+    // Next video
+    nextVideoBtn.addEventListener('click', () => {
+        loadTikTokVideo();
+    });
+    
+    // Auto-refresh video every 50 seconds (but only if not playing)
+    setInterval(() => {
+        if (video.paused) {
+            loadTikTokVideo();
+        }
+    }, 50000);
+    
+    // Submit form function
     async function submitForm(event) {
         event.preventDefault();
         const resultDiv = document.getElementById('result');
@@ -289,18 +510,15 @@
         setTimeout(() => { resultEl.className = 'result-message'; resultEl.style.display = 'none'; }, 4800);
     }
     
-    // Next video button
-    document.getElementById('nextVideoBtn').addEventListener('click', () => {
-        loadTikTokVideo();
-    });
-    
-    // Initial load
+    // Initial video load
     loadTikTokVideo();
     
-    // Auto refresh every 45 seconds
-    setInterval(() => {
-        loadTikTokVideo();
-    }, 45000);
+    // Enable autoplay with sound (respect user interaction)
+    document.body.addEventListener('click', () => {
+        if (video.paused && video.readyState >= 2) {
+            video.play().catch(e => console.log('autoplay on click blocked', e));
+        }
+    }, { once: true });
 </script>
 </body>
 </html>

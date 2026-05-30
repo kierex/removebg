@@ -1,34 +1,50 @@
+<!-- 500.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>500 - Server Error</title>
-    <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f59e0b'/%3E%3Ctext x='50' y='70' font-size='60' text-anchor='middle' fill='white' font-weight='bold'%3E500%3C/text%3E%3C/svg%3E">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>500 | Server Error - ShareBoost</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            background: radial-gradient(circle at 10% 20%, rgb(0, 0, 0) 0%, #0a0a1a 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
+            overflow-x: hidden;
+            padding: 20px;
         }
-
+        body::before {
+            content: "";
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, rgba(255,100,200,0.15), rgba(100,200,255,0.2), rgba(200,100,255,0.2), rgba(255,100,200,0.15));
+            animation: iridescentShift 18s infinite linear;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @keyframes iridescentShift {
+            0% { transform: rotate(0deg); opacity: 0.4; }
+            50% { transform: rotate(180deg); opacity: 0.7; }
+            100% { transform: rotate(360deg); opacity: 0.4; }
+        }
         .error-container {
+            max-width: 600px;
+            width: 100%;
+            position: relative;
+            z-index: 2;
             text-align: center;
-            padding: 40px;
             animation: fadeInUp 0.6s ease-out;
         }
-
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -39,56 +55,209 @@
                 transform: translateY(0);
             }
         }
-
-        .error-code {
-            font-size: 120px;
-            font-weight: 800;
-            color: white;
-            text-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin-bottom: 20px;
+        .glass-card {
+            background: rgba(12, 12, 25, 0.55);
+            backdrop-filter: blur(14px) saturate(180%);
+            border-radius: 60px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            padding: 50px 40px;
+            transition: all 0.3s ease;
         }
-
+        .glass-card:hover {
+            border-color: rgba(255, 180, 255, 0.5);
+            transform: translateY(-5px);
+            box-shadow: 0 35px 60px rgba(0, 0, 0, 0.6);
+        }
+        .error-code {
+            font-size: 140px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff6e8b, #ffb347, #ff86e0, #7873f5);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: gradientShift 3s ease infinite;
+            letter-spacing: 15px;
+            line-height: 1;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .error-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #ff6e8b, #ffb347);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: pulse 2s ease infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
         h1 {
             font-size: 32px;
-            color: white;
-            margin-bottom: 15px;
+            font-weight: 700;
+            color: #fff0f5;
+            margin-bottom: 16px;
         }
-
-        p {
+        .error-message {
+            color: rgba(230, 220, 255, 0.85);
             font-size: 18px;
-            color: rgba(255,255,255,0.9);
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            line-height: 1.6;
         }
-
-        .retry-btn {
+        .warning-box {
+            background: rgba(255, 100, 100, 0.15);
+            border-radius: 40px;
+            padding: 20px;
+            margin: 25px 0;
+            border: 1px solid rgba(255, 100, 100, 0.4);
+        }
+        .warning-box p {
+            color: #ffbcbc;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        .suggestion-list {
+            list-style: none;
+            text-align: left;
+            display: inline-block;
+        }
+        .suggestion-list li {
+            color: #ffd6cc;
+            padding: 8px 0;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .suggestion-list li i {
+            color: #ff86e0;
+            width: 24px;
+        }
+        .button-group {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .btn {
+            padding: 14px 32px;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            background: white;
-            color: #ef4444;
-            padding: 12px 30px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            cursor: pointer;
+            font-size: 16px;
         }
-
+        .btn-primary {
+            background: linear-gradient(135deg, #7248ff, #c55aff);
+            color: white;
+            box-shadow: 0 4px 15px rgba(114, 72, 255, 0.4);
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(197, 90, 255, 0.5);
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #d4c4ff;
+            border: 1px solid rgba(255, 200, 255, 0.3);
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+        .retry-btn {
+            background: rgba(255, 100, 100, 0.2);
+            border: 1px solid rgba(255, 100, 100, 0.5);
+        }
         .retry-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            background: rgba(255, 100, 100, 0.35);
+        }
+        .footer-note {
+            margin-top: 30px;
+            font-size: 12px;
+            color: rgba(180, 160, 255, 0.6);
+        }
+        @media (max-width: 600px) {
+            .glass-card { padding: 35px 25px; }
+            .error-code { font-size: 90px; letter-spacing: 8px; }
+            h1 { font-size: 24px; }
+            .error-message { font-size: 15px; }
+            .btn { padding: 10px 24px; font-size: 14px; }
         }
     </style>
 </head>
 <body>
     <div class="error-container">
-        <div class="error-code">500</div>
-        <h1><i class="fas fa-exclamation-triangle"></i> Server Error</h1>
-        <p>Something went wrong on our end. Please try again later.</p>
-        <button onclick="location.reload()" class="retry-btn">
-            <i class="fas fa-sync-alt"></i>
-            Retry
-        </button>
+        <div class="glass-card">
+            <div class="error-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="error-code">500</div>
+            <h1>Internal Server Error</h1>
+            <div class="error-message">
+                Something went wrong on our end. Our team has been notified.
+            </div>
+            
+            <div class="warning-box">
+                <p><i class="fas fa-info-circle"></i> <strong>What happened?</strong></p>
+                <ul class="suggestion-list">
+                    <li><i class="fas fa-database"></i> The server encountered an unexpected condition</li>
+                    <li><i class="fas fa-clock"></i> This might be a temporary issue</li>
+                    <li><i class="fas fa-plug"></i> Could be related to external API connectivity</li>
+                    <li><i class="fas fa-redo-alt"></i> Refreshing might solve the problem</li>
+                </ul>
+            </div>
+            
+            <div class="button-group">
+                <a href="javascript:location.reload()" class="btn btn-primary retry-btn">
+                    <i class="fas fa-sync-alt"></i> Retry Now
+                </a>
+                <a href="/dashboard.html" class="btn btn-primary">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="/logs.html" class="btn btn-secondary">
+                    <i class="fas fa-scroll"></i> Live Logs
+                </a>
+            </div>
+            
+            <div class="button-group" style="margin-top: 10px;">
+                <a href="/api-docs.html" class="btn btn-secondary">
+                    <i class="fas fa-code"></i> API Documentation
+                </a>
+            </div>
+            
+            <div class="footer-note">
+                <i class="fas fa-share-alt"></i> ShareBoost • Holographic Iridescent Engine<br>
+                <span style="font-size: 11px;">If the problem persists, please check the server logs</span>
+            </div>
+        </div>
     </div>
+    
+    <script>
+        // Auto-retry after 5 seconds (optional)
+        let retryCount = 0;
+        const autoRetry = setTimeout(() => {
+            if (retryCount < 3) {
+                location.reload();
+                retryCount++;
+            }
+        }, 5000);
+        
+        // Clear auto-retry if user interacts with buttons
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('click', () => clearTimeout(autoRetry));
+        });
+    </script>
 </body>
 </html>

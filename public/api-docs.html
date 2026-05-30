@@ -1,0 +1,425 @@
+<!-- api-docs.html - Fixed visibility, improved text contrast -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>ShareBoost | API Documentation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 10% 20%, rgb(0, 0, 0) 0%, #0a0a1a 100%);
+            min-height: 100vh;
+            padding: 40px 24px;
+            color: #f0eaff;
+        }
+        .wrapper { max-width: 1000px; margin: 0 auto; }
+        
+        /* Glass card with better contrast */
+        .glass-card {
+            background: rgba(10, 10, 25, 0.75);
+            backdrop-filter: blur(14px);
+            border-radius: 40px;
+            border: 1px solid rgba(255, 200, 255, 0.3);
+            padding: 32px;
+            margin-bottom: 28px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 { 
+            font-size: 42px; 
+            background: linear-gradient(135deg, #ffffff, #e2caff, #ffb3ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 12px;
+        }
+        
+        .subtitle {
+            color: #c5b3ff;
+            font-size: 1rem;
+            margin-top: 8px;
+            border-left: 3px solid #c86eff;
+            padding-left: 16px;
+        }
+        
+        h2 { 
+            color: #f0d6ff; 
+            margin: 28px 0 16px 0; 
+            font-size: 26px; 
+            border-left: 4px solid #ff86e0;
+            padding-left: 16px;
+            font-weight: 600;
+        }
+        
+        h2:first-of-type { margin-top: 0; }
+        
+        h3 {
+            color: #ffd6b3;
+            font-size: 18px;
+            margin: 16px 0 10px 0;
+            font-weight: 600;
+        }
+        
+        /* Endpoint card with better visibility */
+        .endpoint { 
+            background: rgba(0, 0, 0, 0.5); 
+            border-radius: 28px; 
+            padding: 18px 22px; 
+            margin: 20px 0; 
+            border-left: 5px solid #ff66c0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .method { 
+            display: inline-block; 
+            background: linear-gradient(135deg, #702cff, #c55aff);
+            padding: 6px 18px; 
+            border-radius: 40px; 
+            font-weight: bold; 
+            font-size: 12px; 
+            color: white; 
+            margin-right: 15px;
+            letter-spacing: 0.5px;
+        }
+        
+        .url { 
+            font-family: 'Courier New', monospace; 
+            font-size: 16px; 
+            color: #a8e6ff; 
+            word-break: break-all;
+            font-weight: 500;
+        }
+        
+        /* Table styling - readable */
+        .param-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 18px 0; 
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        
+        .param-table th, .param-table td { 
+            padding: 12px 14px; 
+            border-bottom: 1px solid rgba(255, 200, 255, 0.15); 
+            text-align: left; 
+        }
+        
+        .param-table th { 
+            color: #ffd6ff; 
+            font-weight: 600;
+            background: rgba(114, 72, 255, 0.2);
+        }
+        
+        .param-table td { 
+            color: #d4ccff;
+        }
+        
+        /* Code blocks - highly visible */
+        code { 
+            background: #1a1a3a; 
+            padding: 3px 10px; 
+            border-radius: 20px; 
+            font-family: 'Courier New', monospace; 
+            color: #ffd966;
+            font-size: 13px;
+            border: 1px solid rgba(255, 200, 100, 0.3);
+        }
+        
+        pre { 
+            background: #0a0a1aa0; 
+            padding: 16px 20px; 
+            border-radius: 24px; 
+            overflow-x: auto; 
+            font-family: 'Courier New', monospace; 
+            color: #caffb0;
+            font-size: 13px;
+            margin: 16px 0;
+            border: 1px solid rgba(100, 200, 255, 0.3);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        
+        /* Response example styling */
+        .response-example {
+            background: #0a0a1e;
+            border-radius: 20px;
+            padding: 16px;
+            margin-top: 12px;
+            border-left: 3px solid #4effb2;
+        }
+        
+        .response-example p {
+            color: #b5ffcf;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+        
+        /* Badges and labels */
+        .badge-endpoint {
+            display: inline-block;
+            background: rgba(255, 100, 200, 0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            color: #ffb3ff;
+            margin-left: 10px;
+        }
+        
+        /* Description text */
+        .desc-text {
+            color: #ccc5ff;
+            line-height: 1.6;
+            margin: 12px 0;
+            font-size: 14px;
+        }
+        
+        /* Navigation */
+        .nav-links { 
+            display: flex; 
+            gap: 20px; 
+            justify-content: center; 
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-link { 
+            color: #d4c4ff; 
+            text-decoration: none; 
+            padding: 10px 28px; 
+            border-radius: 40px; 
+            background: rgba(255, 255, 255, 0.12);
+            transition: 0.2s;
+            font-weight: 500;
+            backdrop-filter: blur(5px);
+        }
+        
+        .nav-link:hover { 
+            background: rgba(255, 255, 255, 0.25); 
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        hr {
+            border-color: rgba(255, 200, 255, 0.2);
+            margin: 20px 0;
+        }
+        
+        @media (max-width: 650px) { 
+            .glass-card { padding: 20px; } 
+            .url { font-size: 12px; }
+            h1 { font-size: 32px; }
+            h2 { font-size: 22px; }
+            .method { padding: 4px 12px; font-size: 10px; }
+            .param-table th, .param-table td { padding: 8px 10px; font-size: 12px; }
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a1a3a;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c55aff;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <div class="glass-card">
+        <i class="fas fa-code" style="font-size: 52px; background: linear-gradient(135deg, #ffb3ff, #9effff); -webkit-background-clip: text; background-clip: text; color: transparent;"></i>
+        <h1>API Reference</h1>
+        <p class="subtitle">ShareBoost RESTful API — Complete documentation for session management & automation</p>
+        <hr>
+        <div class="desc-text">
+            <i class="fas fa-info-circle" style="color: #c86eff;"></i> Base URL: <code>http://your-server.com</code><br>
+            <i class="fas fa-clock"></i> <strong>Important:</strong> Share delay is <strong>forced to 2 seconds</strong> for all requests for optimal performance.
+        </div>
+    </div>
+
+    <!-- Submit Session -->
+    <div class="glass-card">
+        <h2><i class="fas fa-paper-plane" style="margin-right: 12px; color: #ff86e0;"></i> Start Share Session</h2>
+        <div class="endpoint">
+            <span class="method">POST</span> <span class="url">/api/submit</span>
+            <span class="badge-endpoint"><i class="fas fa-check-circle"></i> Required Auth</span>
+        </div>
+        
+        <h3>📦 Request Body (JSON)</h3>
+        <table class="param-table">
+            <thead>
+                <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>cookie</code></td><td>string/array</td><td>✅ Yes</td><td>Facebook cookie JSON array or string format</td></tr>
+                <tr><td><code>url</code></td><td>string</td><td>✅ Yes</td><td>Target Facebook post URL</td></tr>
+                <tr><td><code>amount</code></td><td>integer</td><td>✅ Yes</td><td>Number of shares (1 - 10,000)</td></tr>
+                <tr><td><code>interval</code></td><td>integer</td><td>❌ Ignored</td><td>Always overridden to <strong>2 seconds</strong></td></tr>
+            </tbody>
+        </table>
+        
+        <h3>📝 Example Request</h3>
+        <pre>{
+  "cookie": "[{\"key\":\"sb\",\"value\":\"your_sb_value\"},{\"key\":\"datr\",\"value\":\"your_datr\"}]",
+  "url": "https://www.facebook.com/123456789/posts/987654321",
+  "amount": 100,
+  "interval": 2
+}</pre>
+        
+        <div class="response-example">
+            <p><i class="fas fa-check-circle" style="color: #4effb2;"></i> <strong>Success Response (200)</strong></p>
+            <pre>{
+  "success": true,
+  "sessionId": "a1b2c3d4e5f6g7h8i9j0",
+  "message": "Sharing started successfully (2 second delay enforced)",
+  "estimatedCompletion": "2026-05-30T15:30:00.000Z"
+}</pre>
+        </div>
+        
+        <div class="response-example" style="border-left-color: #ff6e8b;">
+            <p><i class="fas fa-exclamation-triangle" style="color: #ff6e8b;"></i> <strong>Error Response (400/500)</strong></p>
+            <pre>{
+  "success": false,
+  "error": "Invalid cookies format or Missing required fields"
+}</pre>
+        </div>
+    </div>
+
+    <!-- Get Sessions -->
+    <div class="glass-card">
+        <h2><i class="fas fa-chart-line" style="margin-right: 12px; color: #ff86e0;"></i> Get All Sessions</h2>
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/total</span>
+        </div>
+        <div class="desc-text">Returns detailed list of all active and completed sessions with progress.</div>
+        
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/sessions/summary</span>
+        </div>
+        <div class="desc-text">Returns aggregated totals: total shares, active sessions, completed sessions.</div>
+        
+        <h3>📊 Response Example (/api/sessions/summary)</h3>
+        <pre>{
+  "success": true,
+  "sessions": [
+    {
+      "sessionId": "abc123",
+      "status": "running",
+      "sharedCount": 45,
+      "targetAmount": 100,
+      "url": "https://facebook.com/...",
+      "startTime": "2026-05-30T10:00:00Z"
+    }
+  ],
+  "totals": {
+    "totalShares": 245,
+    "activeSessions": 2,
+    "completedSessions": 3,
+    "totalSessions": 5
+  }
+}</pre>
+    </div>
+
+    <!-- Session Logs -->
+    <div class="glass-card">
+        <h2><i class="fas fa-history" style="margin-right: 12px; color: #ff86e0;"></i> Session Logs</h2>
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/session/:sessionId/logs</span>
+        </div>
+        <div class="desc-text">Get detailed event logs for a specific session (share attempts, errors, completions).</div>
+        
+        <h3>📋 Example</h3>
+        <pre>GET /api/session/a1b2c3d4e5f6/logs</pre>
+        
+        <div class="response-example">
+            <pre>{
+  "success": true,
+  "sessionId": "a1b2c3d4e5f6",
+  "logs": [
+    {
+      "timestamp": "2026-05-30T10:00:01Z",
+      "action": "share_success",
+      "data": { "count": 1, "total": 100 }
+    }
+  ],
+  "totalLogs": 45
+}</pre>
+        </div>
+    </div>
+
+    <!-- Stop Session -->
+    <div class="glass-card">
+        <h2><i class="fas fa-stop-circle" style="margin-right: 12px; color: #ff86e0;"></i> Stop Session</h2>
+        <div class="endpoint">
+            <span class="method">DELETE</span> <span class="url">/api/session/:sessionId</span>
+        </div>
+        <div class="desc-text">Immediately stops a running session and clears all intervals.</div>
+        
+        <div class="response-example">
+            <pre>{
+  "success": true,
+  "message": "Session stopped successfully"
+}</pre>
+        </div>
+    </div>
+
+    <!-- TikTok Video -->
+    <div class="glass-card">
+        <h2><i class="fab fa-tiktok" style="margin-right: 12px; color: #ff86e0;"></i> TikTok Video Feed</h2>
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/tiktok/random</span>
+        </div>
+        <div class="desc-text">Returns random TikTok video URL for the dashboard player. Video only, no extra info.</div>
+        
+        <h3>🎬 Response</h3>
+        <pre>{
+  "success": true,
+  "video": {
+    "url": "https://v16m.tiktokcdn-us.com/.../video.mp4"
+  }
+}</pre>
+    </div>
+
+    <!-- Health Check -->
+    <div class="glass-card">
+        <h2><i class="fas fa-heartbeat" style="margin-right: 12px; color: #ff86e0;"></i> Health Check</h2>
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/health</span>
+        </div>
+        <div class="desc-text">Server health monitoring endpoint.</div>
+        
+        <pre>{
+  "status": "healthy",
+  "activeSessions": 3,
+  "maxConcurrent": "Unlimited",
+  "uptime": 86400,
+  "timestamp": "2026-05-30T12:00:00Z"
+}</pre>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-links">
+        <a href="/dashboard.html" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/logs.html" class="nav-link"><i class="fas fa-scroll"></i> Live Logs</a>
+        <a href="/" class="nav-link"><i class="fas fa-home"></i> Home</a>
+    </div>
+    
+    <div class="glass-card" style="text-align: center; margin-top: 10px;">
+        <p style="color: #aa99ff; font-size: 13px;">
+            <i class="fas fa-shield-alt"></i> All endpoints are rate-limited for stability &nbsp;|&nbsp;
+            <i class="fas fa-infinity"></i> Unlimited concurrent sessions allowed
+        </p>
+    </div>
+</div>
+</body>
+</html>
